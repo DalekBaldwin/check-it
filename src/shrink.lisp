@@ -88,7 +88,7 @@
           (lambda (x)
             (unless (funcall test x)
               (return-from comb
-                (shrink x test value x))))
+                (shrink x test))))
           value
           :length (1- (length value))
           :copy nil)
