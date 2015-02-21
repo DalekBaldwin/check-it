@@ -11,10 +11,11 @@
   ((:static-file "check-it.asd")
    (:module :src
             :components ((:file "package")
+                         (:file "generators")
                          (:file "shrink")
                          (:file "check-it"))
             :serial t))
-  :depends-on (:alexandria :closer-mop))
+  :depends-on (:alexandria :closer-mop :optima :clometa))
 
 (defsystem :check-it-test
   :name "check-it-test"

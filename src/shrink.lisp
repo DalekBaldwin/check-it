@@ -10,16 +10,24 @@
   (mapcar #'closer-mop:slot-definition-name
           (closer-mop:class-slots (class-of struct))))
 
+(defun copy-structure-and-slots (structure slot-names)
+  (let ((copy (make-instance (class-of structure))))
+    (loop for slot-name in slot-names
+         do (setf (slot-value copy slot-name)
+                  (slot-value structure slot-name)))
+    copy))
+
 (defmethod shrink ((value structure-object) test)
   (let ((slot-names (struct-slot-names value)))
     (loop for slot-name in slot-names
-         do
+       do
          (let ((shrunk-elem
                 (shrink (slot-value value slot-name)
                         (lambda (x)
                           (handler-case
                               (funcall test
-                                       (let ((test-struct (copy-structure value)))
+                                       (let ((test-struct
+                                              (copy-structure-and-slots value slot-names)))
                                          (setf (slot-value test-struct slot-name) x)
                                          test-struct))
                             (error () nil))))))
