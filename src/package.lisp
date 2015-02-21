@@ -19,6 +19,7 @@
            #:generate
            
            #:tuple
+           #:struct
            
            #:element
            #:elements

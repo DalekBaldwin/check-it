@@ -8,7 +8,7 @@
   (is (every #'identity
        (mapcar (lambda (x y) (subtypep (type-of x) y))
                (generate (generator (tuple (real) (integer) (list (integer)))))
-               '(single-float integer cons)))))
+               '(single-float integer (or cons null))))))
 
 (defun int-tester (int)
   (< int 5))
@@ -33,9 +33,10 @@
        (is (equal (shrink (make-list size :initial-element nil) #'list-tester)
                   '(nil nil nil nil nil)))))
 
-(defstruct a-struct
-  a-slot
-  another-slot)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defstruct a-struct
+    a-slot
+    another-slot))
 
 (defun struct-tester (struct)
   (or (< (a-struct-a-slot struct) 5)
@@ -52,4 +53,12 @@
                              #'struct-tester)
                      test-struct)))))
 
-
+(deftest test-struct-generate-shrink ()
+  (let ((generator (generator (struct a-struct
+                                      :a-slot (integer)
+                                      :another-slot (integer))))
+        (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
+    (loop for i from 1 to 10
+         do
+         (is (equalp (shrink (generate generator) (constantly nil))
+                     test-struct)))))

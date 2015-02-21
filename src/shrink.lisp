@@ -6,10 +6,6 @@
   (declare (ignore test))
   value)
 
-(defun struct-slot-names (struct)
-  (mapcar #'closer-mop:slot-definition-name
-          (closer-mop:class-slots (class-of struct))))
-
 (defun copy-structure-and-slots (structure slot-names)
   (let ((copy (make-instance (class-of structure))))
     (loop for slot-name in slot-names
