@@ -11,6 +11,7 @@
   ((:static-file "check-it.asd")
    (:module :src
             :components ((:file "package")
+                         (:file "shrink")
                          (:file "check-it"))
             :serial t))
   :depends-on (:alexandria :closer-mop))

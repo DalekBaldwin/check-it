@@ -1,7 +1,8 @@
 (in-package :cl-user)
 
 (defpackage :check-it
-  (:use :cl :alexandria))
+  (:use :cl :alexandria)
+  (:export #:shrink))
 
 (in-package :check-it)
 

@@ -29,6 +29,9 @@
 (defmethod shrink ((value integer) test)
   (shrink-int value test 0 value))
 
+(defun smaller (num1 num2)
+  (< (abs num1) (abs num2)))
+
 (defun shrink-int (value test prev best)
   (cond ((= value prev)
          (if (funcall test value)
