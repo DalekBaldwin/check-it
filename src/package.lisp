@@ -18,6 +18,8 @@
            #:object-generator
            #:generate
            
+           #:tuple
+           
            #:element
            #:elements
            #:guard

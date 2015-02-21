@@ -85,7 +85,7 @@
     ((atom exp) exp)
     ((symbolp (first exp))
      (case (first exp)
-       (int
+       (integer
         `(make-instance 'int-generator))
        (real
         `(make-instance 'real-generator))

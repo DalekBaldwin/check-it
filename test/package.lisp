@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :check-it-test
-  (:use :cl :check-it :stefil)
+  (:use :cl :check-it :stefil :alexandria)
   (:export
    #:test-all))
 

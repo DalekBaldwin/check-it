@@ -4,6 +4,12 @@
 
 (defsuite* test-all)
 
+(deftest test-generator ()
+  (is (every #'identity
+       (mapcar (lambda (x y) (subtypep (type-of x) y))
+               (generate (generator (tuple (real) (integer) (list (integer)))))
+               '(single-float integer cons)))))
+
 (defun int-tester (int)
   (< int 5))
 
@@ -11,6 +17,12 @@
   (loop for int in (list 5 20 100 300)
      do
        (is (= (shrink int #'int-tester) 5))))
+
+(deftest test-int-generate-shrink ()
+  (let ((generator (generator (guard #'positive-integer-p (integer)))))
+    (loop for i from 0 to 100
+       do
+         (is (= (shrink (generate generator) (constantly nil)) 0)))))
 
 (defun list-tester (list)
   (< (length list) 5))
@@ -39,3 +51,5 @@
                               :another-slot j)
                              #'struct-tester)
                      test-struct)))))
+
+
