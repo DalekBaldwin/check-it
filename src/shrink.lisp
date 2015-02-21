@@ -83,15 +83,14 @@
           ;; can't shrink nil!
           value)))
       (t
-       (block comb
-         (map-combinations
-          (lambda (x)
-            (unless (funcall test x)
-              (return-from comb
-                (shrink x test))))
-          value
-          :length (1- (length value))
-          :copy nil)
-         ;; there were no failures for lists of length-1, so start shrinking
-         ;; elements instead
-         (elem-wise-shrink))))))
+       (map-combinations
+        (lambda (x)
+          (unless (funcall test x)
+            (return-from shrink
+              (shrink x test))))
+        value
+        :length (1- (length value))
+        :copy nil)
+       ;; there were no failures for lists of length-1, so start shrinking
+       ;; elements instead
+       (elem-wise-shrink)))))
