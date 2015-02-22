@@ -92,7 +92,83 @@
                 (generate gen)))
     struct))
 
+(defmacro seq<< (&rest clauses)
+  "Collect the result of each clause in a seq form into a list."
+  (let ((gensyms (loop for clause in clauses collect (gensym))))
+    `(seq
+      ,@(loop for clause in clauses
+           for sym in gensyms
+           collect `(bind ,sym ,clause))
+      :-> (append ,@(loop for clause in clauses
+                       for sym in gensyms
+                       collect `(list ,sym))))))
+
+(defgrammar generator-grammar ()
+  (sym ()
+       (bind s _)
+       :->? (and (symbolp s) (not (keywordp s)))
+       :-> s)
+  (sat (pred)
+       (bind s _)
+       :->? (funcall pred s)
+       :-> s)
+  (gen ()
+       (or (int-gen)
+           (real-gen)
+           (list-gen)
+           (tuple-gen)
+           (or-gen)
+           (guard-gen)
+           (struct-gen)
+           (atom-gen)))
+  (atom-gen () (sat #'atom))
+  (int-gen ()
+           (list 'integer)
+           :-> `(make-instance 'int-generator))
+  (real-gen ()
+            (list 'real)
+            :-> `(make-instance 'real-generator))
+  (list-gen ()
+            (list 'list (bind element (gen)))
+            :-> `(make-instance 'list-generator :element ,element))
+  (tuple-gen ()
+             (list 'tuple (bind elements (* (gen))))
+             :-> `(make-instance 'tuple-generator :elements (list ,@elements)))
+  (or-gen ()
+          (list 'or (bind elements (+ (gen))))
+          :-> `(make-instance 'tuple-generator :elements (list ,@elements)))
+  (guard-gen ()
+             (list 'guard (bind guard _) (bind element (gen)))
+             :-> `(make-instance 'guard-generator
+                                 :guard ,guard
+                                 :element ,element))
+  (struct-gen ()
+              (list 'struct
+                    (bind struct-type (sym))
+                    (bind keys-and-gens (* (seq<< (sat #'keywordp) (gen)))))
+              :-> (let* ((slot-names (struct-type-slot-names struct-type))
+                         (sorted-slots
+                          (sort keys-and-gens #'<
+                                :key (lambda (key-and-gen)
+                                       (position (first key-and-gen) slot-names
+                                                 :test (lambda (key sym)
+                                                         (equal (symbol-name key)
+                                                                (symbol-name sym))))))))
+                    `(make-instance
+                      'struct-generator
+                      :struct-type ',struct-type
+                      :slot-names (list ,@(loop for slot-name in slot-names
+                                             collect `(quote ,slot-name)))
+                      :slot-keywords (list ,@(mapcar #'first sorted-slots))
+                      :slot-generators
+                      (list ,@(mapcar #'second sorted-slots))))))
+
 (defmacro generator (exp)
+  (let ((gen (gomatch generator-grammar gen () (list exp))))
+    (if (eql gen clometa.c::failure-value)
+        (error "Bad generator form ~A" exp)
+        gen))
+  #+nil
   (cond
     ((atom exp) exp)
     ((symbolp (first exp))
