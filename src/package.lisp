@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :check-it
-  (:use :cl :alexandria :optima :clometa.c)
+  (:use :cl :alexandria :optima)
   (:export #:shrink
            
            #:*size*

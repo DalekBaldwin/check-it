@@ -15,7 +15,7 @@
                          (:file "shrink")
                          (:file "check-it"))
             :serial t))
-  :depends-on (:alexandria :closer-mop :optima :clometa))
+  :depends-on (:alexandria :closer-mop :optima))
 
 (defsystem :check-it-test
   :name "check-it-test"
