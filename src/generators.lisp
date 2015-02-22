@@ -129,13 +129,13 @@
                                                :test (lambda (key sym)
                                                        (equal (symbol-name key)
                                                               (symbol-name sym))))))))
-                   `(make-instance 'struct-generator
-                                   :struct-type ',(second exp)
-                                   :slot-names (list ,@(loop for slot-name in slot-names
-                                                            collect `(quote ,slot-name)))
-                                   :slot-keywords (list ,@(mapcar #'first sorted-slots))
-                                   :slot-generators
-                                   (list ,@(loop for slot in sorted-slots
-                                              collect `(generator ,(second slot))))
-                                   ))))))))
+                   `(make-instance
+                     'struct-generator
+                     :struct-type ',(second exp)
+                     :slot-names (list ,@(loop for slot-name in slot-names
+                                            collect `(quote ,slot-name)))
+                     :slot-keywords (list ,@(mapcar #'first sorted-slots))
+                     :slot-generators
+                     (list ,@(loop for slot in sorted-slots
+                                collect `(generator ,(second slot))))))))))))
     (t exp)))
