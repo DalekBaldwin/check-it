@@ -38,9 +38,16 @@
        (is (equal (shrink (make-list size :initial-element nil) #'list-tester)
                   '(nil nil nil nil nil)))))
 
+(deftest test-struct-slot-names ()
+  (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
+    (is (equalp (check-it::struct-slot-names test-struct)
+                (list 'a-slot 'another-slot)))))
+
 (deftest test-copy-structure-and-slots ()
   (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
-    (is (equalp (check-it::copy-structure-and-slots test-struct)
+    (is (equalp (check-it::copy-structure-and-slots
+                 test-struct
+                 (list 'a-slot 'another-slot))
                 test-struct))))
 
 (deftest test-struct-shrink ()
