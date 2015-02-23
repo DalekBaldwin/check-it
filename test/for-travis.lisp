@@ -6,6 +6,7 @@
            (declare (ignore h))
            (format t "~&~A~%" c)
            (force-output t)
+           (sleep 1)
            (uiop:quit -1))))
     (handler-case
         (run-all-tests)
@@ -17,4 +18,5 @@
         (describe (stefil::failure-description-of c) t)
         (format t "~%")
         (force-output t)
+        (sleep 1)
         (uiop:quit -1)))))
