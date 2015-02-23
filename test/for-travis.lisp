@@ -4,8 +4,15 @@
   (let ((*debugger-hook*
          (lambda (c h)
            (declare (ignore h))
-           (print c t)
+           (format t "~&~A~%" c)
            (force-output t)
            (sleep 1)
            (uiop:quit -1))))
-    (run-all-tests)))
+    (handler-case
+        (run-all-tests)
+      (stefil::assertion-failed (c)
+        (format t "~&Test assertion failedz:~%~%")
+        (describe (stefil::failure-description-of c) t)
+        (force-output t)
+        (sleep 1)
+        (uiop:quit -1)))))
