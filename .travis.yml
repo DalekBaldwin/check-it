@@ -29,5 +29,6 @@ script:
                   (lambda (c h)
                     (declare (ignore h))
                     (print c t)
+                    (force-output t)
                     (uiop:quit -1))))
              (check-it-test:test-all))'
