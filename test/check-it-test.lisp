@@ -25,6 +25,8 @@
 
 (defsuite* deterministic-tests)
 
+(in-suite deterministic-tests)
+
 (deftest test-int-shrink ()
   (loop for int in (list 5 20 100 300)
      do
@@ -48,6 +50,8 @@
                      test-struct)))))
 
 (defsuite* randomized-tests)
+
+(in-suite randomized-tests)
 
 (deftest test-generator ()
   (is (every #'identity
