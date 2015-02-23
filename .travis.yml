@@ -31,4 +31,4 @@ script:
                     (print c t)
                     (force-output t)
                     (uiop:quit -1))))
-             (check-it-test:test-all))'
+             (check-it-test:run-all-tests))'

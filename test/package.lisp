@@ -3,7 +3,9 @@
 (defpackage :check-it-test
   (:use :cl :check-it :stefil :alexandria)
   (:export
-   #:test-all))
+   #:run-all-tests
+   #:deterministic-tests
+   #:randomized-tests))
 
 (in-package :check-it-test)
 
