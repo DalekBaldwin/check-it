@@ -23,5 +23,6 @@
   :components
   ((:module :test
             :components ((:file "package")
-                         (:file "check-it-test" :depends-on ("package")))))
+                         (:file "check-it-test")
+                         (:file "for-travis"))))
   :depends-on (:check-it :stefil))
