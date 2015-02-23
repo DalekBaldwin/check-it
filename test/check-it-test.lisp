@@ -30,7 +30,7 @@
 (deftest test-int-shrink ()
   (loop for int in (list 5 20 100 300)
      do
-       (is (= (shrink int #'int-tester) 4))))
+       (is (= (shrink int #'int-tester) 5))))
 
 (deftest test-list-shrink ()
   (loop for size in (list 5 20 50 100)
