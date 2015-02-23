@@ -53,6 +53,7 @@
                              #'struct-tester)
                      test-struct)))))
 
+#-abcl
 (deftest test-struct-generate-shrink ()
   (let ((generator (generator (struct a-struct
                                       :a-slot (integer)
