@@ -6,13 +6,15 @@
            (declare (ignore h))
            (format t "~&~A~%" c)
            (force-output t)
-           (sleep 1)
            (uiop:quit -1))))
     (handler-case
         (run-all-tests)
+      ;; some Lisps appear not to use the condition's :report value,
+      ;; so we reimplement it here explicitly
       (stefil::assertion-failed (c)
-        (format t "~&Test assertion failedz:~%~%")
-        (describe (stefil::failure-description-of c) t)
         (force-output t)
-        (sleep 1)
+        (format t "~&Test assertion failed:~%~%")
+        (describe (stefil::failure-description-of c) t)
+        (format t "~%")
+        (force-output t)
         (uiop:quit -1)))))
