@@ -23,7 +23,7 @@
                           (handler-case
                               (funcall test
                                        (let ((test-struct
-                                              (copy-structure-and-slots value slot-names)))
+                                              (copy-structure value slot-names)))
                                          (setf (slot-value test-struct slot-name) x)
                                          test-struct))
                             (error () nil))))))
@@ -47,17 +47,18 @@
                  (values value prev)
                  (values prev value))
            (let ((test-value (truncate (/ (+ small big) 2))))
-             (if (funcall test test-value)
-                 ;; success; search away from zero
-                 (if (zerop test-value)
-                     best ;; can't get smaller than zero
-                     (shrink-int
-                      (case (signum test-value)
-                        (1 (1+ test-value))
-                        (-1 (1- test-value)))
-                      test big best))
+             (cond ((funcall test test-value)
+                    ;; success; search away from zero
+                    (if (zerop test-value)
+                        best ;; can't get smaller than zero
+                        (shrink-int
+                         (case (signum test-value)
+                           (1 (1+ test-value))
+                           (-1 (1- test-value)))
+                         test big best)))
                  ;;failure; search toward zero
-                 (shrink-int small test test-value test-value)))))))
+                   (t
+                    (shrink-int small test test-value test-value))))))))
 
 (defmethod shrink ((value list) test)
   (flet ((elem-wise-shrink ()

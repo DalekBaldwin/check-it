@@ -43,6 +43,7 @@
     (is (equalp (check-it::struct-slot-names test-struct)
                 (list 'a-slot 'another-slot)))))
 
+#+nil
 (deftest test-copy-structure-and-slots ()
   (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
     (is (equalp (check-it::copy-structure-and-slots
