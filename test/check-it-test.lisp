@@ -38,6 +38,11 @@
        (is (equal (shrink (make-list size :initial-element nil) #'list-tester)
                   '(nil nil nil nil nil)))))
 
+(deftest test-copy-structure-and-slots ()
+  (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
+    (is (equalp (check-it::copy-structure-and-slots test-struct)
+                test-struct))))
+
 (deftest test-struct-shrink ()
   (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
     (loop for i in (list 5 20 100 300)
