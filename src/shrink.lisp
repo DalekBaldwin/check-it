@@ -149,7 +149,7 @@ that of the alternative that was originally tried."
               for elem in cached-value
               do
                 (progn
-                  (setf (cached-value gen) elem)
+                  (setf (cached-value sub-generator) elem)
                   (let ((shrunk-elem
                          (shrink sub-generator
                                  (lambda (x)
