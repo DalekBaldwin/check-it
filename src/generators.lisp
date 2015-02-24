@@ -1,6 +1,7 @@
 (in-package :check-it)
 
 (defparameter *size* 10)
+(defparameter *num-trials* 100)
 
 (defclass generator ()
   ((cached-value
@@ -102,8 +103,8 @@
 
 (defmethod generate ((generator or-generator))
   (let ((chosen-generator (random-element (sub-generators generator))))
-    (setf (cached-generator generator) chosen-generator))
-  (generate chosen-generator))
+    (setf (cached-generator generator) chosen-generator)
+    (generate chosen-generator)))
 
 (defun int-generator-function (low high)
   (match (cons low high)

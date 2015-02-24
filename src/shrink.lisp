@@ -68,6 +68,9 @@
   value)
 
 (defmethod shrink ((value list) test)
+  (shrink-list value test))
+
+(defun shrink-list (value test)
   (flet ((elem-wise-shrink ()
            (loop for i from 0
               for elem in value
@@ -91,17 +94,20 @@
        ;; can't shrink nil!
        value)
       (t
-       (map-combinations
-        (lambda (x)
-          (unless (funcall test x)
-            (return-from shrink
-              (shrink x test))))
-        value
-        :length (1- (length value))
-        :copy nil)
-       ;; there were no failures for lists of length-1, so start shrinking
-       ;; elements instead
-       (elem-wise-shrink)))))
+       (let ((can-shrink-lengthwise
+              (block remove-one-elem
+                (loop for i from 0 below (length value)
+                   do
+                     (let ((shrunk-list (remove-nth i value)))
+                       (unless (funcall test shrunk-list)
+                         (setf value shrunk-list)
+                         (return-from remove-one-elem t))))
+                (return-from remove-one-elem nil))))
+         (if (not can-shrink-lengthwise)
+             ;; there were no failures for lists of length-1, so start shrinking
+             ;; elements instead
+             (elem-wise-shrink)
+             (shrink value test)))))))
 
 ;;;; Generator shrinkers
 
@@ -148,6 +154,9 @@ that of the alternative that was originally tried."
           (subseq list (1+ n))))
 
 (defmethod shrink ((value list-generator) test)
+  (shrink-list-generator value test))
+
+(defun shrink-list-generator (value test)
   (with-obvious-accessors (cached-value sub-generator) value
     (flet ((elem-wise-shrink ()
              (loop for i from 0
@@ -174,16 +183,20 @@ that of the alternative that was originally tried."
          ;; can't shrink nil!
          cached-value)
         (t
-         (loop for i from 0 below (length cached-value)
-            do
-              (let ((shrunk-list (remove-nth i cached-value)))
-                (unless (funcall test shrunk-list)
-                  (setf cached-value shrunk-list)
-                  (return-from shrink
-                    (shrink value test)))))
-         ;; there were no failures for lists of length-1, so start shrinking
-         ;; elements instead
-         (elem-wise-shrink))))))
+         (let ((can-shrink-lengthwise
+                (block remove-one-elem
+                  (loop for i from 0 below (length cached-value)
+                     do
+                       (let ((shrunk-list (remove-nth i cached-value)))
+                         (unless (funcall test shrunk-list)
+                           (setf cached-value shrunk-list)
+                           (return-from remove-one-elem t))))
+                  (return-from remove-one-elem nil))))
+           (if (not can-shrink-lengthwise)
+               ;; there were no failures for lists of length-1, so start shrinking
+               ;; elements instead
+               (elem-wise-shrink)
+               (shrink-list-generator value test))))))))
 
 (defmethod shrink ((value tuple-generator) test)
   (with-obvious-accessors (cached-value sub-generators) value
