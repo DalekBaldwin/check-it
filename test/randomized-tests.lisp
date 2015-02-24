@@ -151,7 +151,8 @@
 
 (deftest test-or-generator-shrink ()
   ;; ensure or-generator won't hop to a nonconstant alternative
-  (let ((generator (generator (or
+  (let ((*size* 25)
+        (generator (generator (or
                                (integer 15 20)
                                (integer 5 10)))))
     (loop for i from 1 to 100
