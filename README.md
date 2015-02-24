@@ -1,6 +1,4 @@
-![](http://www.textfiles.com/underconstruction/HoHotSpringsBath9452ssunder_construction_fire.gif)
-
-![](http://www.textfiles.com/underconstruction/yoyosemitegorge3116Constructionbarmove33.gif)
+![](http://www.textfiles.com/underconstruction/HoHotSpringsBath9452ssunder_construction_fire.gif) ![](http://www.textfiles.com/underconstruction/yoyosemitegorge3116Constructionbarmove33.gif)
 
 ![](http://www.textfiles.com/underconstruction/ColosseumStadium8141cuteconstruct.gif)
 
