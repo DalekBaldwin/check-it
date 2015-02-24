@@ -43,7 +43,7 @@
     (is (equalp (check-it::struct-slot-names test-struct)
                 (list 'a-slot 'another-slot)))))
 
-#+nil
+#-allegro
 (deftest test-copy-structure-and-slots ()
   (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
     (is (equalp (check-it::copy-structure-and-slots
@@ -81,6 +81,7 @@
 #-abcl
 (deftest test-struct-generate-shrink ()
   (let ((generator (generator (struct a-struct
+                                      #+allegro make-a-struct
                                       :a-slot (integer)
                                       :another-slot (integer))))
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
