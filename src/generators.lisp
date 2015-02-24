@@ -80,12 +80,16 @@
         try
         (generate generator))))
 
+(defun slot-definition-name (slot)
+  #-abcl (closer-mop:slot-definition-name slot)
+  #+abcl (aref slot 1))
+
 (defun struct-slot-names (struct)
-  (mapcar #'closer-mop:slot-definition-name
+  (mapcar #'slot-definition-name
           (closer-mop:class-slots (class-of struct))))
 
 (defun struct-type-slot-names (struct-type)
-  (mapcar #'closer-mop:slot-definition-name
+  (mapcar #'slot-definition-name
           (closer-mop:class-slots (find-class struct-type))))
 
 (defmethod generate ((generator struct-generator))
