@@ -81,10 +81,9 @@
        do
          (is (= (shrink (generate generator) (constantly nil)) 0)))))
 
-#-abcl
 (deftest test-struct-generate-shrink ()
   (let ((generator (generator (struct a-struct
-                                      #+allegro make-a-struct
+                                      #+(or abcl allegro) make-a-struct
                                       :a-slot (integer)
                                       :another-slot (integer))))
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))

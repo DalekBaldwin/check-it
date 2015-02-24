@@ -35,7 +35,7 @@
   ((struct-type
     :initarg :struct-type
     :accessor struct-type)
-   #+allegro
+   #+(or abcl allegro)
    (constructor
     :initarg :constructor
     :accessor constructor)
@@ -94,9 +94,9 @@
 
 (defmethod generate ((generator struct-generator))
   (let* ((struct
-          #-allegro
+          #-(or abcl allegro)
           (make-instance (struct-type generator))
-          #+allegro
+          #+(or abcl allegro)
           (funcall (constructor generator))))
     (loop for name in (slot-names generator)
        for gen in (slot-generators generator)
@@ -130,9 +130,9 @@
        (struct
         (let* ((struct-type (second exp))
                (slot-names (struct-type-slot-names struct-type))
-               #+allegro (constructor (third exp)))
-          (loop for (keyword gen) on (#-allegro cddr
-                                      #+allegro cdddr
+               #+(or abcl allegro) (constructor (third exp)))
+          (loop for (keyword gen) on (#-(or abcl allegro) cddr
+                                      #+(or abcl allegro) cdddr
                                       exp) by #'cddr
              collect (list keyword gen) into keywords-and-gens
              finally
@@ -147,7 +147,7 @@
                    `(make-instance
                      'struct-generator
                      :struct-type ',struct-type
-                     #+allegro ,@(list :constructor `',constructor)
+                     #+(or abcl allegro) ,@(list :constructor `',constructor)
                      :slot-names (list ,@(loop for slot-name in slot-names
                                             collect `(quote ,slot-name)))
                      :slot-keywords (list ,@(mapcar #'first sorted-slots))
