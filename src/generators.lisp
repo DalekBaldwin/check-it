@@ -2,11 +2,25 @@
 
 (defparameter *size* 10)
 
-(defclass generator () ())
+(defclass generator ()
+  ((cached-value
+    :initarg :cached-value
+    :accessor cached-value))
+  (:documentation
+   "Abstract base class for all generators. Not meant to be instantiated."))
 
-(defclass int-generator (generator) ())
+(defclass simple-generator (generator) ()
+  (:documentation
+   "Abstract base class for non-compound generators. Not meant to be instantiated."))
 
-(defclass real-generator (generator) ())
+(defclass int-generator (simple-generator) ())
+
+(defclass real-generator (simple-generator) ())
+
+(defclass symbol-generator (simple-generator)
+  ((element
+    :initarg :element
+    :accessor element)))
 
 (defclass list-generator (generator)
   ((element
@@ -19,7 +33,10 @@
     :accessor elements)))
 
 (defclass or-generator (generator)
-  ((elements
+  ((cached-generator
+    :initarg :cached-generator
+    :accessor cached-generator)
+   (elements
     :initarg :elements
     :accessor elements)))
 
@@ -52,7 +69,11 @@
 (defgeneric generate (generator))
 
 (defmethod generate (generator)
+  "Treat non-generators as constants."
   generator)
+
+(defmethod generate :around ((generator generator))
+  (setf (cached-value generator) (call-next-method)))
 
 (defmethod generate ((generator list-generator))
   (loop repeat (random *size*)
@@ -65,7 +86,9 @@
   (nth (random (length list)) list))
 
 (defmethod generate ((generator or-generator))
-  (generate (random-element (elements generator))))
+  (let ((chosen-generator (random-element (elements generator))))
+    (setf (cached-generator generator) chosen-generator))
+  (generate chosen-generator))
 
 (defmethod generate ((generator int-generator))
   (- (random (+ *size* *size* 1)) *size*))

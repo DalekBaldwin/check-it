@@ -27,8 +27,8 @@
                                          (setf (slot-value test-struct slot-name) x)
                                          test-struct))
                             (error () nil))))))
-           (setf (slot-value value slot-name) shrunk-elem)))
-    value))
+           (setf (slot-value value slot-name) shrunk-elem))))
+  value)
 
 (defmethod shrink ((value integer) test)
   (shrink-int value test 0 value))
@@ -99,3 +99,130 @@
        ;; there were no failures for lists of length-1, so start shrinking
        ;; elements instead
        (elem-wise-shrink)))))
+
+(defmethod shrink ((value int-generator) test)
+  (with-obvious-accessors (cached-value) value
+    (setf cached-value (shrink cached-value test))))
+
+(defmethod shrink ((value real-generator) test)
+  (declare (ignore test))
+  ;; can't shrink over non-discrete search space
+  (cached-value value))
+
+(defmethod shrink ((value or-generator) test)
+  "If all of the untried alternatives are constant, they can be trivially
+considered to constitute a search space of a complexity smaller than or equal to
+that of the alternative that was originally tried."
+  (with-obvious-accessors (cached-value cached-generator elements) value
+    (let ((shrunk-cached-value (shrink cached-generator test)))
+      (cond
+        ((eql shrunk-cached-value cached-value)
+         ;; original gen couldn't shrink, so try constant alternatives
+         (let ((potential-generators
+           (remove-if (lambda (g)
+                        (or (eql g cached-generator)
+                            (closer-mop:subclassp
+                             (class-of g)
+                             (find-class 'generator)))))
+            elements))
+           (loop for gen in potential-generators
+                do
+                (unless (funcall test gen)
+                  ;; use first failing alternative
+                  (setf cached-value gen
+                        cached-generator gen)
+                  (return-from shrink gen)))
+           ;; if nothing shrank, return original cache
+           cached-value))
+        (t
+         (setf cached-value shrunk-cached-value))))))
+
+#+nil
+(defmethod shrink ((value list-generator) test)
+  (with-obvious-accessors (cached-value element) value
+    (flet ((elem-wise-shrink ()
+           (loop for i from 0
+              for elem in cached-value
+              do
+                (progn
+                  (setf (cached-value gen) elem)
+                  (let ((shrunk-elem
+                         (shrink element
+                                 (lambda (x)
+                                   ;; test if elem can be replaced with a
+                                   ;; particular value and still fail
+                                   (handler-case
+                                       (funcall test
+                                                (let ((test-list (copy-list cached-value)))
+                                                  (setf (nth i test-list) x)
+                                                  test-list))
+                                     (error () nil))))))
+                    ;; now actually replace it with the best value
+                    (setf (nth i cached-value) shrunk-elem))))
+           value))
+    (cond
+      ((endp value)
+       (cond
+         ((funcall test value)
+          (elem-wise-shrink))
+         (t
+          ;; can't shrink nil!
+          value)))
+      (t
+       (map-combinations
+        (lambda (x)
+          (unless (funcall test x)
+            (return-from shrink
+              (shrink x test))))
+        value
+        :length (1- (length value))
+        :copy nil)
+       ;; there were no failures for lists of length-1, so start shrinking
+       ;; elements instead
+       (elem-wise-shrink))))))
+
+(defmethod shrink ((value tuple-generator) test)
+  (with-obvious-accessors (cached-value elements) value
+    (loop for cached-elem in cached-value
+       for element in elements
+       for i from 0
+       do
+         (let ((shrunk-elem
+                (shrink element
+                        (lambda (x)
+                          (handler-case
+                              (funcall test
+                                       (let ((test-tuple
+                                              (copy-list cached-value)))
+                                         (setf (nth i test-tuple) x)
+                                         test-tuple))
+                            (error () nil))))))
+           (setf (nth i cached-value) shrunk-elem)))
+    cached-value))
+
+(defmethod shrink ((value struct-generator) test)
+  (with-obvious-accessors (cached-value
+                           #-(or abcl allegro) struct-type
+                           #+(or abcl allegro) constructor
+                           slot-names
+                           slot-generators) value
+    (let* ((struct
+            #-(or abcl allegro)
+            (make-instance struct-type)
+            #+(or abcl allegro)
+            (funcall constructor)))
+      (loop for name in slot-names
+         for gen in slot-generators
+         do
+           (let ((shrunk-elem
+                  (shrink gen
+                          (lambda (x)
+                            (handler-case
+                                (funcall test
+                                         (let ((test-struct
+                                                (copy-structure cached-value)))
+                                           (setf (slot-value test-struct slot-name) x)
+                                           test-struct))
+                              (error () nil))))))
+             (setf (slot-value struct slot-name) shrunk-elem)))
+      struct)))

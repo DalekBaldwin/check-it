@@ -21,6 +21,8 @@
            #:tuple
            #:struct
            
+           #:cached-value
+           #:cached-generator
            #:element
            #:elements
            #:guard

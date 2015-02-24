@@ -11,6 +11,7 @@
   ((:static-file "check-it.asd")
    (:module :src
             :components ((:file "package")
+                         (:file "util")
                          (:file "generators")
                          (:file "shrink")
                          (:file "check-it"))
