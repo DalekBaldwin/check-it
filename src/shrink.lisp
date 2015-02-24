@@ -228,7 +228,7 @@ that of the alternative that was originally tried."
                                            test-struct))
                               (error () nil))))))
              (setf (slot-value struct name) shrunk-elem)))
-      struct)))
+      (setf cached-value struct))))
 
 (defmethod shrink ((value guard-generator) test)
   (with-obvious-accessors (cached-value guard sub-generator) value
