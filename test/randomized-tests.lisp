@@ -13,6 +13,8 @@
                  #+abcl t ;; ridiculous
                  )))))
 
+;;;; Shrink results of generators
+
 (deftest test-int-generate-shrink ()
   (let ((generator (generator (guard #'positive-integer-p (integer)))))
     (loop for i from 0 to 100
@@ -29,6 +31,8 @@
        do
          (is (equalp (shrink (generate generator) (constantly nil))
                      test-struct)))))
+
+;;;; Shrink generators themselves
 
 (deftest test-tuple-generator-shrink ()
   (let ((generator (generator (tuple (integer) (integer) (integer)))))
@@ -62,3 +66,18 @@
            (shrink generator #'list-tester)
            (is (and (= (length (cached-value generator)) 6)
                     (every (lambda (x) (= (abs x) 6)) (cached-value generator))))))))
+
+(deftest test-struct-generator-shrink ()
+  (let ((generator (generator (struct a-struct
+                                      #+(or abcl allegro) make-a-struct
+                                      :a-slot (guard #'greater-than-5 (integer))
+                                      :another-slot (guard #'greater-than-5 (integer))))))
+    (loop for i from 1 to 10
+       do
+         (progn
+           (generate generator)
+           (shrink generator (lambda (x)
+                               (or (< (abs (a-struct-a-slot x)) 5)
+                                   (< (abs (a-struct-another-slot x)) 5))))
+           (is (and (= (abs (a-struct-a-slot (cached-value generator))) 6)
+                    (= (abs (a-struct-another-slot (cached-value generator))) 6)))))))

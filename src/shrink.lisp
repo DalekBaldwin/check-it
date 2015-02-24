@@ -209,11 +209,11 @@ that of the alternative that was originally tried."
                            #+(or abcl allegro) constructor
                            slot-names
                            slot-generators) value
-    (let* ((struct
-            #-(or abcl allegro)
-            (make-instance struct-type)
-            #+(or abcl allegro)
-            (funcall constructor)))
+    (let ((struct
+           #-(or abcl allegro)
+           (make-instance struct-type)
+           #+(or abcl allegro)
+           (funcall constructor)))
       (loop for name in slot-names
          for gen in slot-generators
          do
@@ -224,10 +224,10 @@ that of the alternative that was originally tried."
                                 (funcall test
                                          (let ((test-struct
                                                 (copy-structure cached-value)))
-                                           (setf (slot-value test-struct slot-name) x)
+                                           (setf (slot-value test-struct name) x)
                                            test-struct))
                               (error () nil))))))
-             (setf (slot-value struct slot-name) shrunk-elem)))
+             (setf (slot-value struct name) shrunk-elem)))
       struct)))
 
 (defmethod shrink ((value guard-generator) test)
