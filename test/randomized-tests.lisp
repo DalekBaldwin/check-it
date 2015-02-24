@@ -57,6 +57,17 @@
 
 ;;;; Shrink generators themselves
 
+(deftest test-int-generator-shrink ()
+  (let ((generator (generator (integer 5 9))))
+    (loop for i from 0 to 100
+       do
+         (progn
+           (generate generator)
+           (is (= (shrink generator (lambda (x) (< x 3))) 5))
+           (loop for try = (generate generator)
+              until (>= (cached-value generator) 6))
+           (is (= (shrink generator (lambda (x) (< x 6))) 6))))))
+
 (deftest test-tuple-generator-shrink ()
   (let ((generator (generator (tuple (integer) (integer) (integer)))))
     (loop for i from 1 to 10
