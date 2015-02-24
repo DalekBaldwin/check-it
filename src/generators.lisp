@@ -13,7 +13,24 @@
   (:documentation
    "Abstract base class for non-compound generators. Not meant to be instantiated."))
 
-(defclass int-generator (simple-generator) ())
+(defclass int-generator (simple-generator)
+  ((lower-limit
+    :initarg :lower-limit
+    :accessor lower-limit
+    :initform '*)
+   (upper-limit
+    :initarg :upper-limit
+    :accessor upper-limit
+    :initform '*)
+   (generator-function
+    :accessor generator-function)))
+
+(defmethod initialize-instance
+    :after ((instance int-generator) &rest initargs)
+  (declare (ignore initargs))
+  (with-obvious-accessors (lower-limit upper-limit generator-function) instance
+      (setf generator-function
+            (int-generator-function lower-limit upper-limit))))
 
 (defclass real-generator (simple-generator) ())
 
@@ -85,8 +102,19 @@
     (setf (cached-generator generator) chosen-generator))
   (generate chosen-generator))
 
+(defun int-generator-function (low high)
+  (match (cons low high)
+    ((cons '* '*)
+     (lambda () (- (random (+ *size* *size* 1)) *size*)))
+    ((cons '* _)
+     (lambda () (- (random (+ high *size* 1)) *size*)))
+    ((cons _ '*)
+     (lambda () (+ (random (- (1+ *size*) low)) low)))
+    (_
+     (lambda () (+ (random (- (1+ high) low)) low)))))
+
 (defmethod generate ((generator int-generator))
-  (- (random (+ *size* *size* 1)) *size*))
+  (funcall (generator-function generator)))
 
 (defmethod generate ((generator real-generator))
   (- (random (float (* 2 *size*)))
@@ -130,7 +158,18 @@
        (quote
         `',(second exp))
        (integer
-        `(make-instance 'int-generator))
+        `(make-instance 'int-generator
+                        ,@(when (second exp)
+                                (append
+                                 (list :lower-limit
+                                       (if (eql (second exp) '*)
+                                           ''*
+                                           (second exp)))
+                                 (when (third exp)
+                                   (list :upper-limit
+                                         (if (eql (third exp) '*)
+                                             ''*
+                                             (third exp))))))))
        (real
         `(make-instance 'real-generator))
        (list

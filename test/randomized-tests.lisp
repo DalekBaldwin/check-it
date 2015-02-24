@@ -15,6 +15,25 @@
 
 ;;;; Shrink results of generators
 
+(deftest test-int-generate ()
+  (let ((*size* 10))
+    (let ((generator (generator (integer * 2))))
+      (loop for i from 1 to 100
+           do
+           (is (<= -10 (generate generator) 2))))
+    (let ((generator (generator (integer -2 *))))
+      (loop for i from 1 to 100
+           do
+           (is (<= -2 (generate generator) 10))))
+    (let ((generator (generator (integer -2 2))))
+      (loop for i from 1 to 100
+           do
+           (is (<= -2 (generate generator) 2))))
+    (let ((generator (generator (integer))))
+      (loop for i from 1 to 100
+           do
+           (is (<= -10 (generate generator) 10))))))
+
 (deftest test-int-generate-shrink ()
   (let ((generator (generator (guard #'positive-integer-p (integer)))))
     (loop for i from 0 to 100
