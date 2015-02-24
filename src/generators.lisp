@@ -121,12 +121,11 @@
     ((cons '* '*)
      (lambda (test) (lambda (x) (funcall test x))))
     ((cons '* _)
-     (lambda (test) (lambda (x) (not (and (<= x high) (not (funcall test x)))))))
+     (lambda (test) (lambda (x) (or (< high x) (funcall test x)))))
     ((cons _ '*)
-     (lambda (test) (lambda (x) (not (and (<= low x) (not (funcall test x)))))))
+     (lambda (test) (lambda (x) (or (< x low) (funcall test x)))))
     (_
-     (lambda (test) (lambda (x) (not (and (<= low x) (<= x high)
-                                          (not (funcall test x)))))))))
+     (lambda (test) (lambda (x) (or (< x low) (< high x) (funcall test x)))))))
 
 (defmethod generate ((generator int-generator))
   (funcall (generator-function generator)))
