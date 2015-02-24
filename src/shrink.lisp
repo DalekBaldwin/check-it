@@ -106,8 +106,9 @@
 ;;;; Generator shrinkers
 
 (defmethod shrink ((value int-generator) test)
-  (with-obvious-accessors (cached-value) value
-    (setf cached-value (shrink cached-value test))))
+  (with-obvious-accessors (cached-value shrinker-predicate) value
+    (setf cached-value (shrink cached-value
+                               (funcall shrinker-predicate test)))))
 
 (defmethod shrink ((value real-generator) test)
   (declare (ignore test))

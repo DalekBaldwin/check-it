@@ -38,6 +38,10 @@
   (let ((generator (generator (guard #'positive-integer-p (integer)))))
     (loop for i from 0 to 100
        do
+         (is (= (shrink (generate generator) (constantly nil)) 0))))
+  (let ((generator (generator (integer 1))))
+    (loop for i from 0 to 100
+       do
          (is (= (shrink (generate generator) (constantly nil)) 0)))))
 
 (deftest test-struct-generate-shrink ()
@@ -65,6 +69,15 @@
                                (guard #'greater-than-5 (integer))
                                (guard #'greater-than-5 (integer))
                                (guard #'greater-than-5 (integer))))))
+    (loop for i from 1 to 10
+       do
+         (progn
+           (generate generator)
+           (is (every (lambda (x) (= (abs x) 6))
+                      (shrink generator #'tuple-tester))))))
+  (let ((generator (generator (tuple (integer 6)
+                                     (integer 6)
+                                     (integer 6)))))
     (loop for i from 1 to 10
        do
          (progn

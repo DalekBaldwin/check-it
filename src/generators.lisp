@@ -23,14 +23,17 @@
     :accessor upper-limit
     :initform '*)
    (generator-function
-    :accessor generator-function)))
+    :accessor generator-function)
+   (shrinker-predicate
+    :accessor shrinker-predicate)))
 
 (defmethod initialize-instance
     :after ((instance int-generator) &rest initargs)
   (declare (ignore initargs))
-  (with-obvious-accessors (lower-limit upper-limit generator-function) instance
-      (setf generator-function
-            (int-generator-function lower-limit upper-limit))))
+  (with-obvious-accessors
+      (lower-limit upper-limit generator-function shrinker-predicate) instance
+      (setf generator-function (int-generator-function lower-limit upper-limit)
+            shrinker-predicate (int-shrinker-predicate lower-limit upper-limit))))
 
 (defclass real-generator (simple-generator) ())
 
@@ -112,6 +115,18 @@
      (lambda () (+ (random (- (1+ *size*) low)) low)))
     (_
      (lambda () (+ (random (- (1+ high) low)) low)))))
+
+(defun int-shrinker-predicate (low high)
+  (match (cons low high)
+    ((cons '* '*)
+     (lambda (test) (lambda (x) (funcall test x))))
+    ((cons '* _)
+     (lambda (test) (lambda (x) (not (and (<= x high) (not (funcall test x)))))))
+    ((cons _ '*)
+     (lambda (test) (lambda (x) (not (and (<= low x) (not (funcall test x)))))))
+    (_
+     (lambda (test) (lambda (x) (not (and (<= low x) (<= x high)
+                                          (not (funcall test x)))))))))
 
 (defmethod generate ((generator int-generator))
   (funcall (generator-function generator)))
