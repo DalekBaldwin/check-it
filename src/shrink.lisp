@@ -119,14 +119,14 @@ that of the alternative that was originally tried."
         ((eql shrunk-cached-value cached-value)
          ;; original gen couldn't shrink, so try constant alternatives
          (let ((potential-generators
-           (remove-if (lambda (g)
-                        (or (eql g cached-generator)
-                            (closer-mop:subclassp
-                             (class-of g)
-                             (find-class 'generator)))))
-            elements))
+                (remove-if (lambda (g)
+                             (or (eql g cached-generator)
+                                 (closer-mop:subclassp
+                                  (class-of g)
+                                  (find-class 'generator))))
+                           elements)))
            (loop for gen in potential-generators
-                do
+              do
                 (unless (funcall test gen)
                   ;; use first failing alternative
                   (setf cached-value gen
@@ -137,7 +137,6 @@ that of the alternative that was originally tried."
         (t
          (setf cached-value shrunk-cached-value))))))
 
-#+nil
 (defmethod shrink ((value list-generator) test)
   (with-obvious-accessors (cached-value element) value
     (flet ((elem-wise-shrink ()
