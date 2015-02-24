@@ -99,6 +99,16 @@
     :initarg :slot-generators
     :accessor slot-generators)))
 
+(defclass custom-generator (generator)
+  ((kind
+    :initarg :kind
+    :accessor kind)
+   (sub-generator
+    :accessor sub-generator)
+   (recursive-depth
+    :initform 0
+    :accessor recursive-depth)))
+
 (defgeneric generate (generator))
 
 (defmethod generate (generator)
@@ -205,7 +215,21 @@
                 (generate gen)))
     struct))
 
-(defmacro generator (exp)
+(defmethod generate ((generator custom-generator))
+  (generate (sub-generator generator)))
+
+;; should probably look into special slots in ContextL
+(defmethod generate :around ((generator custom-generator))
+  (with-obvious-accessors (recursive-depth) generator
+    (let ((old-depth recursive-depth))
+      (incf recursive-depth)
+      (unwind-protect
+           (call-next-method)
+        (setf recursive-depth old-depth)))))
+
+(defparameter *custom-generators* nil)
+
+(defmacro generator (exp &environment env)
   (cond
     ((atom exp) exp)
     ((symbolp (first exp))
@@ -243,11 +267,11 @@
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
-                                             collect `(generator ,elem)))))
+                                                   collect `(generator ,elem)))))
        (or
         `(make-instance 'or-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
-                                             collect `(generator ,elem)))))
+                                                   collect `(generator ,elem)))))
        (guard
         `(make-instance 'guard-generator
                         :guard ,(second exp)
@@ -257,8 +281,8 @@
                (slot-names (struct-type-slot-names struct-type))
                #+(or abcl allegro) (constructor (third exp)))
           (loop for (keyword gen) on (#-(or abcl allegro) cddr
-                                      #+(or abcl allegro) cdddr
-                                      exp) by #'cddr
+                                        #+(or abcl allegro) cdddr
+                                        exp) by #'cddr
              collect (list keyword gen) into keywords-and-gens
              finally
                (return
@@ -278,5 +302,39 @@
                      :slot-keywords (list ,@(mapcar #'first sorted-slots))
                      :slot-generators
                      (list ,@(loop for slot in sorted-slots
-                                collect `(generator ,(second slot))))))))))))
+                                collect `(generator ,(second slot))))))))))
+       (otherwise
+        (let* ((gen-name (first exp))
+               (gen-rule (cdr (assoc gen-name *custom-generators*))))
+          (cond
+            (gen-rule
+             (multiple-value-bind (expansion expanded-p)
+                 ;; I can't believe I finally found a legitimate use for this hack
+                 (macroexpand-1 'generator-context env)
+               (if (and expanded-p
+                        (assoc gen-name expansion))
+                   `(symbol-value ',(cdr (assoc gen-name expansion)))
+                   (let ((gen-var (gensym (symbol-name gen-name))))
+                     `(let ((,gen-var
+                             (make-instance 'custom-generator :kind ',gen-name)))
+                        (declare (special ,gen-var))
+                        (symbol-macrolet
+                            ((generator-context
+                              ,(if expanded-p (cons `(,gen-name . ,gen-var)
+                                                    expansion)
+                                   (list `(,gen-name . ,gen-var)))))
+                          (setf (sub-generator ,gen-var)
+                                (generator
+                                 ,(funcall gen-rule (rest exp))))))))))
+            (t exp))))))
     (t exp)))
+
+(defmacro defgenerator (name params &body body)
+  (with-gensyms (exp)
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defclass ,name (custom-generator) ())
+       (push (cons ',name
+                   (lambda (,exp)
+                     (destructuring-bind ,params ,exp
+                       ,@body)))
+             *custom-generators*))))

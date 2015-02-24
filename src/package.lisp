@@ -28,7 +28,9 @@
            #:guard
            #:constructor
            #:slot-names
-           #:slot-generators))
+           #:slot-generators
+           
+           #:defgenerator))
 
 (in-package :check-it)
 

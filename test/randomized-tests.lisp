@@ -161,3 +161,14 @@
            (loop for try = (generate generator)
               until (>= (cached-value generator) 15))
            (is (= (shrink generator (constantly nil)) 15))))))
+
+(defgenerator derp (&rest rest-exp)
+  (declare (ignore rest-exp))
+  `(or (integer) (derp)))
+
+(deftest test-custom-generator ()
+  (let ((generator (generator (derp)))
+        (*size* 10))
+    (loop for i from 1 to 20
+       do
+         (is (<= -10 (generate generator) 10)))))
