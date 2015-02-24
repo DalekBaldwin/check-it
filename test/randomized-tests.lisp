@@ -36,11 +36,11 @@
 
 (deftest test-int-generate-shrink ()
   (let ((generator (generator (guard #'positive-integer-p (integer)))))
-    (loop for i from 0 to 100
+    (loop for i from 1 to 100
        do
          (is (= (shrink (generate generator) (constantly nil)) 0))))
   (let ((generator (generator (integer 1))))
-    (loop for i from 0 to 100
+    (loop for i from 1 to 100
        do
          (is (= (shrink (generate generator) (constantly nil)) 0)))))
 
@@ -58,15 +58,37 @@
 ;;;; Shrink generators themselves
 
 (deftest test-int-generator-shrink ()
-  (let ((generator (generator (integer 5 9))))
-    (loop for i from 0 to 100
-       do
-         (progn
-           (generate generator)
-           (is (= (shrink generator (lambda (x) (< x 3))) 5))
-           (loop for try = (generate generator)
-              until (>= (cached-value generator) 6))
-           (is (= (shrink generator (lambda (x) (< x 6))) 6))))))
+  (let ((*size* 30))
+    (let ((generator (generator (integer 5))))
+      (loop for i from 1 to 100
+         do
+           (progn
+             (generate generator)
+             (is (= (shrink generator (lambda (x) (< x 3))) 5))
+             (loop for try = (generate generator)
+                until (>= (cached-value generator) 9))
+             (is (= (shrink generator (lambda (x) (< x 9))) 9)))))
+    (let ((generator (generator (integer * 8))))
+      (loop for i from 1 to 100
+         do
+           (progn
+             (generate generator)
+             (is (= (shrink generator (lambda (x) (> x 10))) 0))
+             (loop for try = (generate generator)
+                until (<= (cached-value generator) 3))
+             (is (= (shrink generator (lambda (x) (> x 3))) 0))
+             (loop for try = (generate generator)
+                until (<= (cached-value generator) -3))
+             (is (= (shrink generator (lambda (x) (> x -3))) -3)))))
+    (let ((generator (generator (integer 5 9))))
+      (loop for i from 1 to 100
+         do
+           (progn
+             (generate generator)
+             (is (= (shrink generator (lambda (x) (< x 3))) 5))
+             (loop for try = (generate generator)
+                until (>= (cached-value generator) 6))
+             (is (= (shrink generator (lambda (x) (< x 6))) 6)))))))
 
 (deftest test-tuple-generator-shrink ()
   (let ((generator (generator (tuple (integer) (integer) (integer)))))
