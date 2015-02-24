@@ -132,6 +132,8 @@
     ((atom exp) exp)
     ((symbolp (first exp))
      (case (first exp)
+       (quote
+        `',(second exp))
        (integer
         `(make-instance 'int-generator))
        (real
