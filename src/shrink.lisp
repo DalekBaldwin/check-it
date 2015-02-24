@@ -142,44 +142,47 @@ that of the alternative that was originally tried."
         (t
          (setf cached-value shrunk-cached-value))))))
 
+(defun remove-nth (n list)
+  (append (subseq list 0 n)
+          (subseq list (1+ n))))
+
 (defmethod shrink ((value list-generator) test)
   (with-obvious-accessors (cached-value sub-generator) value
     (flet ((elem-wise-shrink ()
-           (loop for i from 0
-              for elem in cached-value
-              do
-                (progn
-                  (setf (cached-value sub-generator) elem)
-                  (let ((shrunk-elem
-                         (shrink sub-generator
-                                 (lambda (x)
-                                   ;; test if elem can be replaced with a
-                                   ;; particular value and still fail
-                                   (handler-case
-                                       (funcall test
-                                                (let ((test-list (copy-list cached-value)))
-                                                  (setf (nth i test-list) x)
-                                                  test-list))
-                                     (error () nil))))))
-                    ;; now actually replace it with the best value
-                    (setf (nth i cached-value) shrunk-elem))))
-           value))
-    (cond
-      ((endp cached-value)
-       ;; can't shrink nil!
-       cached-value)
-      (t
-       (map-combinations
-        (lambda (x)
-          (unless (funcall test x)
-            (return-from shrink
-              (shrink x test))))
-        cached-value
-        :length (1- (length cached-value))
-        :copy nil)
-       ;; there were no failures for lists of length-1, so start shrinking
-       ;; elements instead
-       (elem-wise-shrink))))))
+             (loop for i from 0
+                for elem in cached-value
+                do
+                  (progn
+                    (setf (cached-value sub-generator) elem)
+                    (let ((shrunk-elem
+                           (shrink sub-generator
+                                   (lambda (x)
+                                     ;; test if elem can be replaced with a
+                                     ;; particular value and still fail
+                                     (handler-case
+                                         (funcall test
+                                                  (let ((test-list (copy-list cached-value)))
+                                                    (setf (nth i test-list) x)
+                                                    test-list))
+                                       (error () nil))))))
+                      ;; now actually replace it with the best value
+                      (setf (nth i cached-value) shrunk-elem))))
+             cached-value))
+      (cond
+        ((endp cached-value)
+         ;; can't shrink nil!
+         cached-value)
+        (t
+         (loop for i from 0 below (length cached-value)
+            do
+              (let ((shrunk-list (remove-nth i cached-value)))
+                (unless (funcall test shrunk-list)
+                  (setf cached-value shrunk-list)
+                  (return-from shrink
+                    (shrink value test)))))
+         ;; there were no failures for lists of length-1, so start shrinking
+         ;; elements instead
+         (elem-wise-shrink))))))
 
 (defmethod shrink ((value tuple-generator) test)
   (with-obvious-accessors (cached-value sub-generators) value

@@ -48,3 +48,17 @@
            (generate generator)
            (is (every (lambda (x) (= (abs x) 6))
                       (shrink generator #'tuple-tester)))))))
+
+(deftest test-list-generator-shrink ()
+  (let ((generator (generator
+                    (guard (lambda (l) (> (length l) 5))
+                           (list
+                            (guard #'greater-than-5
+                                   (integer)))))))
+    (loop for i from 1 to 10
+         do
+         (progn
+           (generate generator)
+           (shrink generator #'list-tester)
+           (is (and (= (length (cached-value generator)) 6)
+                    (every (lambda (x) (= (abs x) 6)) (cached-value generator))))))))
