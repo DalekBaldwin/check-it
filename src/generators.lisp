@@ -23,30 +23,30 @@
     :accessor element)))
 
 (defclass list-generator (generator)
-  ((element
-    :initarg :element
-    :accessor element)))
+  ((sub-generator
+    :initarg :sub-generator
+    :accessor sub-generator)))
 
 (defclass tuple-generator (generator)
-  ((elements
-    :initarg :elements
-    :accessor elements)))
+  ((sub-generators
+    :initarg :sub-generators
+    :accessor sub-generators)))
 
 (defclass or-generator (generator)
   ((cached-generator
     :initarg :cached-generator
     :accessor cached-generator)
-   (elements
-    :initarg :elements
-    :accessor elements)))
+   (sub-generators
+    :initarg :sub-generators
+    :accessor sub-generators)))
 
 (defclass guard-generator (generator)
   ((guard
     :initarg :guard
     :accessor guard)
-   (element
-    :initarg :element
-    :accessor element)))
+   (sub-generator
+    :initarg :sub-generator
+    :accessor sub-generator)))
 
 (defclass struct-generator (generator)
   ((struct-type
@@ -77,16 +77,16 @@
 
 (defmethod generate ((generator list-generator))
   (loop repeat (random *size*)
-     collect (generate (element generator))))
+     collect (generate (sub-generator generator))))
 
 (defmethod generate ((generator tuple-generator))
-  (mapcar #'generate (elements generator)))
+  (mapcar #'generate (sub-generators generator)))
 
 (defun random-element (list)
   (nth (random (length list)) list))
 
 (defmethod generate ((generator or-generator))
-  (let ((chosen-generator (random-element (elements generator))))
+  (let ((chosen-generator (random-element (sub-generators generator))))
     (setf (cached-generator generator) chosen-generator))
   (generate chosen-generator))
 
@@ -98,7 +98,7 @@
      *size*))
 
 (defmethod generate ((generator guard-generator))
-  (let ((try (generate (element generator))))
+  (let ((try (generate (sub-generator generator))))
     (if (funcall (guard generator) try)
         try
         (generate generator))))
@@ -137,19 +137,19 @@
        (real
         `(make-instance 'real-generator))
        (list
-        `(make-instance 'list-generator :element (generator ,(second exp))))
+        `(make-instance 'list-generator :sub-generator (generator ,(second exp))))
        (tuple
         `(make-instance 'tuple-generator
-                        :elements (list ,@(loop for elem in (rest exp)
+                        :sub-generators (list ,@(loop for elem in (rest exp)
                                              collect `(generator ,elem)))))
        (or
         `(make-instance 'or-generator
-                        :elements (list ,@(loop for elem in (rest exp)
+                        :sub-generators (list ,@(loop for elem in (rest exp)
                                              collect `(generator ,elem)))))
        (guard
         `(make-instance 'guard-generator
                         :guard ,(second exp)
-                        :element (generator ,(third exp))))
+                        :sub-generator (generator ,(third exp))))
        (struct
         (let* ((struct-type (second exp))
                (slot-names (struct-type-slot-names struct-type))

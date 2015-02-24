@@ -109,7 +109,7 @@
   "If all of the untried alternatives are constant, they can be trivially
 considered to constitute a search space of a complexity smaller than or equal to
 that of the alternative that was originally tried."
-  (with-obvious-accessors (cached-value cached-generator elements) value
+  (with-obvious-accessors (cached-value cached-generator sub-generators) value
     (let ((shrunk-cached-value (shrink cached-generator test)))
       (cond
         ((eql shrunk-cached-value cached-value)
@@ -120,7 +120,7 @@ that of the alternative that was originally tried."
                                  (closer-mop:subclassp
                                   (class-of g)
                                   (find-class 'generator))))
-                           elements)))
+                           sub-generators)))
            (loop for gen in potential-generators
               do
                 (unless (funcall test gen)
@@ -134,7 +134,7 @@ that of the alternative that was originally tried."
          (setf cached-value shrunk-cached-value))))))
 
 (defmethod shrink ((value list-generator) test)
-  (with-obvious-accessors (cached-value element) value
+  (with-obvious-accessors (cached-value sub-generator) value
     (flet ((elem-wise-shrink ()
            (loop for i from 0
               for elem in cached-value
@@ -142,7 +142,7 @@ that of the alternative that was originally tried."
                 (progn
                   (setf (cached-value gen) elem)
                   (let ((shrunk-elem
-                         (shrink element
+                         (shrink sub-generator
                                  (lambda (x)
                                    ;; test if elem can be replaced with a
                                    ;; particular value and still fail
@@ -173,13 +173,13 @@ that of the alternative that was originally tried."
        (elem-wise-shrink))))))
 
 (defmethod shrink ((value tuple-generator) test)
-  (with-obvious-accessors (cached-value elements) value
+  (with-obvious-accessors (cached-value sub-generators) value
     (loop for cached-elem in cached-value
-       for element in elements
+       for sub-generator in sub-generators
        for i from 0
        do
          (let ((shrunk-elem
-                (shrink element
+                (shrink sub-generator
                         (lambda (x)
                           (handler-case
                               (funcall test
