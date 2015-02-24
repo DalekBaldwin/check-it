@@ -217,3 +217,12 @@ that of the alternative that was originally tried."
                               (error () nil))))))
              (setf (slot-value struct slot-name) shrunk-elem)))
       struct)))
+
+(defmethod shrink ((value guard-generator) test)
+  (with-obvious-accessors (cached-value guard sub-generator) value
+    (let ((result
+           (shrink sub-generator
+                   (lambda (x)
+                     (or (funcall test x)
+                         (not (funcall guard x)))))))
+      (setf cached-value result))))

@@ -25,5 +25,7 @@
   ((:module :test
             :components ((:file "package")
                          (:file "check-it-test")
+                         (:file "deterministic-tests")
+                         (:file "randomized-tests")
                          (:file "for-travis"))))
   :depends-on (:check-it :stefil))

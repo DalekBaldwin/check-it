@@ -18,76 +18,12 @@
   (or (< (a-struct-a-slot struct) 5)
       (< (a-struct-another-slot struct) 5)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defstruct a-struct
-    a-slot
-    another-slot))
+(defun tuple-tester (tuple)
+  (some (lambda (x) (< (abs x) 5)) tuple))
 
-(defsuite* deterministic-tests)
+(defun greater-than-5 (num)
+  (> (abs num) 5))
 
-(in-suite deterministic-tests)
-
-(deftest test-int-shrink ()
-  (loop for int in (list 5 20 100 300)
-     do
-       (is (= (shrink int #'int-tester) 5))))
-
-(deftest test-list-shrink ()
-  (loop for size in (list 5 20 50 100)
-       do
-       (is (equal (shrink (make-list size :initial-element nil) #'list-tester)
-                  '(nil nil nil nil nil)))))
-
-(deftest test-struct-slot-names ()
-  (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
-    (is (equalp (check-it::struct-slot-names test-struct)
-                (list 'a-slot 'another-slot)))))
-
-#-(or abcl allegro)
-(deftest test-copy-structure-and-slots ()
-  (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
-    (is (equalp (check-it::copy-structure-and-slots
-                 test-struct
-                 (list 'a-slot 'another-slot))
-                test-struct))))
-
-(deftest test-struct-shrink ()
-  (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
-    (loop for i in (list 5 20 100 300)
-       for j in (list 5 20 100 300)
-       do
-         (is (equalp (shrink (make-a-struct
-                              :a-slot i
-                              :another-slot j)
-                             #'struct-tester)
-                     test-struct)))))
-
-(defsuite* randomized-tests)
-
-(in-suite randomized-tests)
-
-(deftest test-generator ()
-  (is (every #'identity
-       (mapcar (lambda (x y) (subtypep (type-of x) y))
-               (generate (generator (tuple (real) (integer) (list (integer)))))
-               '(single-float integer
-                 #-abcl (or cons null)
-                 #+abcl t ;; ridiculous
-                 )))))
-
-(deftest test-int-generate-shrink ()
-  (let ((generator (generator (guard #'positive-integer-p (integer)))))
-    (loop for i from 0 to 100
-       do
-         (is (= (shrink (generate generator) (constantly nil)) 0)))))
-
-(deftest test-struct-generate-shrink ()
-  (let ((generator (generator (struct a-struct
-                                      #+(or abcl allegro) make-a-struct
-                                      :a-slot (integer)
-                                      :another-slot (integer))))
-        (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
-    (loop for i from 1 to 10
-         do
-         (is (equalp (shrink (generate generator) (constantly nil))
-                     test-struct)))))
+(defstruct a-struct
+  a-slot
+  another-slot)
