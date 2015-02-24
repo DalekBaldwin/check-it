@@ -36,7 +36,24 @@
       (setf generator-function (int-generator-function lower-limit upper-limit)
             shrinker-predicate (int-shrinker-predicate lower-limit upper-limit))))
 
-(defclass real-generator (simple-generator) ())
+(defclass real-generator (simple-generator)
+  ((lower-limit
+    :initarg :lower-limit
+    :accessor lower-limit
+    :initform '*)
+   (upper-limit
+    :initarg :upper-limit
+    :accessor upper-limit
+    :initform '*)
+   (generator-function
+    :accessor generator-function)))
+
+(defmethod initialize-instance
+    :after ((instance real-generator) &rest initargs)
+  (declare (ignore initargs))
+  (with-obvious-accessors
+      (lower-limit upper-limit generator-function) instance
+      (setf generator-function (real-generator-function lower-limit upper-limit))))
 
 (defclass list-generator (generator)
   ((sub-generator
@@ -111,11 +128,31 @@
     ((cons '* '*)
      (lambda () (- (random (+ *size* *size* 1)) *size*)))
     ((cons '* _)
-     (lambda () (- (random (+ high *size* 1)) *size*)))
+     (let ((new-high (* (min (abs high) *size*) (signum high))))
+       (lambda () (- (random (+ high *size* 1)) *size*))))
     ((cons _ '*)
-     (lambda () (+ (random (- (1+ *size*) low)) low)))
+     (let ((new-low (* (min (abs low) *size*) (signum low))))
+       (lambda () (+ (random (- (1+ *size*) low)) low))))
     (_
-     (lambda () (+ (random (- (1+ high) low)) low)))))
+     (let ((new-high (* (min (abs high) *size*) (signum high)))
+           (new-low (* (min (abs high) *size*) (signum low))))
+       (lambda () (+ (random (- (1+ high) low)) low))))))
+
+(defun real-generator-function (low high)
+  (match (cons low high)
+    ((cons '* '*)
+     (lambda () (- (random (float (* 2 *size*))) *size*)))
+    ((cons '* _)
+     (let ((new-high (* (min (abs high) *size*) (signum high))))
+       (lambda ()
+         (- (random (float (+ new-high *size*))) *size*))))
+    ((cons _ '*)
+     (let ((new-low (* (min (abs low) *size*) (signum low))))
+       (lambda () (+ (random (float (- *size* low))) low))))
+    (_
+     (let ((new-high (* (min (abs high) *size*) (signum high)))
+           (new-low (* (min (abs high) *size*) (signum low)))))
+     (lambda () (+ (random (float (- high low))) low)))))
 
 (defun int-shrinker-predicate (low high)
   (match (cons low high)
@@ -132,8 +169,7 @@
   (funcall (generator-function generator)))
 
 (defmethod generate ((generator real-generator))
-  (- (random (float (* 2 *size*)))
-     *size*))
+  (- (random (float (* 2 *size*))) *size*))
 
 (defmethod generate ((generator guard-generator))
   (let ((try (generate (sub-generator generator))))
@@ -186,7 +222,18 @@
                                              ''*
                                              (third exp))))))))
        (real
-        `(make-instance 'real-generator))
+        `(make-instance 'real-generator
+                        ,@(when (second exp)
+                                (append
+                                 (list :lower-limit
+                                       (if (eql (second exp) '*)
+                                           ''*
+                                           (second exp)))
+                                 (when (third exp)
+                                   (list :upper-limit
+                                         (if (eql (third exp) '*)
+                                             ''*
+                                             (third exp))))))))
        (list
         `(make-instance 'list-generator :sub-generator (generator ,(second exp))))
        (tuple
