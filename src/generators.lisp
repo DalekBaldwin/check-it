@@ -2,11 +2,16 @@
 
 (defparameter *size* 10)
 (defparameter *num-trials* 100)
+(defparameter *bias-sensitivity* 6.0)
+(defparameter *recursive-bias-decay* 1.5)
 
 (defclass generator ()
   ((cached-value
     :initarg :cached-value
-    :accessor cached-value))
+    :accessor cached-value)
+   (bias
+    :initform 1.0
+    :accessor bias))
   (:documentation
    "Abstract base class for all generators. Not meant to be instantiated."))
 
@@ -128,8 +133,54 @@
 (defun random-element (list)
   (nth (random (length list)) list))
 
+(defun compute-weights (numbers sensitivity)
+  (let* ((len (length numbers))
+         (total (reduce #'+ numbers))
+         (proportions (loop for number in numbers
+                         collect (/ number total)))
+         (weights (loop for number in proportions
+                     collect
+                       (expt
+                        (- (* len (log number)))
+                        sensitivity)))
+         (total-weights (reduce #'+ weights))
+         (normalized-weights (loop for number in weights
+                                collect (/ number total-weights))))
+    normalized-weights))
+
+(defmethod bias (generator)
+  1.0)
+
+(let ((double-float-most-positive-fixnum
+       (coerce most-positive-fixnum 'double-float)))
+  (defun random-uniform ()
+    (/ (random most-positive-fixnum) double-float-most-positive-fixnum)))
+
+(defun choose-generator (generators)
+  (let* ((len (length generators))
+         (total-bias (loop for generator in generators
+                        sum (bias generator)))
+         (weights (compute-weights
+                   (loop for generator in generators
+                      collect (/ (bias generator) total-bias))
+                   *bias-sensitivity*))
+         (thresholds (loop for weight in weights
+                        sum weight into total-weight
+                        collect total-weight))
+         (rand (random-uniform))
+         (selected-position
+          (or
+           (position-if (lambda (threshold) (< rand threshold)) thresholds)
+           (1- len)))
+         (chosen-generator (elt generators selected-position)))
+    #+nil
+    (format t "~&gens: ~A~%weights: ~A~%thresholds: ~A~%pos: ~A~%gen: ~A~%~%"
+            generators weights thresholds selected-position chosen-generator)
+    chosen-generator))
+
 (defmethod generate ((generator or-generator))
-  (let ((chosen-generator (random-element (sub-generators generator))))
+  (let ((chosen-generator ;;(random-element (sub-generators generator))
+         (choose-generator (sub-generators generator))))
     (setf (cached-generator generator) chosen-generator)
     (generate chosen-generator)))
 
@@ -224,8 +275,20 @@
     (let ((old-depth recursive-depth))
       (incf recursive-depth)
       (unwind-protect
-           (call-next-method)
+           (call-with-adjusted-bias generator
+                                    (lambda () (call-next-method)))
         (setf recursive-depth old-depth)))))
+
+(defgeneric call-with-adjusted-bias (generator proceed)
+  (:documentation "Strategies for managing growth of recursive generators."))
+
+(defmethod call-with-adjusted-bias ((generator custom-generator) proceed)
+  (with-obvious-accessors (bias) generator
+    (let ((old-bias bias))
+      (setf bias (* bias *recursive-bias-decay*))
+      (unwind-protect
+           (funcall proceed)
+        (setf bias old-bias)))))
 
 (defparameter *custom-generators* nil)
 
