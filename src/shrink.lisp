@@ -81,12 +81,8 @@
            value))
     (cond
       ((endp value)
-       (cond
-         ((funcall test value)
-          (elem-wise-shrink))
-         (t
-          ;; can't shrink nil!
-          value)))
+       ;; can't shrink nil!
+       value)
       (t
        (map-combinations
         (lambda (x)
@@ -160,21 +156,17 @@ that of the alternative that was originally tried."
                     (setf (nth i cached-value) shrunk-elem))))
            value))
     (cond
-      ((endp value)
-       (cond
-         ((funcall test value)
-          (elem-wise-shrink))
-         (t
-          ;; can't shrink nil!
-          value)))
+      ((endp cached-value)
+       ;; can't shrink nil!
+       cached-value)
       (t
        (map-combinations
         (lambda (x)
           (unless (funcall test x)
             (return-from shrink
               (shrink x test))))
-        value
-        :length (1- (length value))
+        cached-value
+        :length (1- (length cached-value))
         :copy nil)
        ;; there were no failures for lists of length-1, so start shrinking
        ;; elements instead
