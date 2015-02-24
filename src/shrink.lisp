@@ -23,7 +23,7 @@
                           (handler-case
                               (funcall test
                                        (let ((test-struct
-                                              (copy-structure value slot-names)))
+                                              (copy-structure value)))
                                          (setf (slot-value test-struct slot-name) x)
                                          test-struct))
                             (error () nil))))))
