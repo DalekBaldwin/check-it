@@ -17,11 +17,6 @@
 
 (defclass real-generator (simple-generator) ())
 
-(defclass symbol-generator (simple-generator)
-  ((element
-    :initarg :element
-    :accessor element)))
-
 (defclass list-generator (generator)
   ((sub-generator
     :initarg :sub-generator
