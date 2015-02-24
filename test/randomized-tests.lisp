@@ -148,3 +148,15 @@
                                    (< (abs (a-struct-another-slot x)) 5))))
            (is (and (= (abs (a-struct-a-slot (cached-value generator))) 6)
                     (= (abs (a-struct-another-slot (cached-value generator))) 6)))))))
+
+(deftest test-or-generator-shrink ()
+  ;; ensure or-generator won't hop to a nonconstant alternative
+  (let ((generator (generator (or
+                               (integer 15 20)
+                               (integer 5 10)))))
+    (loop for i from 1 to 100
+       do
+         (progn
+           (loop for try = (generate generator)
+              until (>= (cached-value generator) 15))
+           (is (= (shrink generator (constantly nil)) 15))))))
