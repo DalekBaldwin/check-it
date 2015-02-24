@@ -13,6 +13,8 @@
                   (slot-value structure slot-name)))
     copy))
 
+;;;; Value shrinkers
+
 (defmethod shrink ((value structure-object) test)
   (let ((slot-names (struct-slot-names value)))
     (loop for slot-name in slot-names
@@ -60,6 +62,11 @@
                    (t
                     (shrink-int small test test-value test-value))))))))
 
+(defmethod shrink ((value real) test)
+  (declare (ignore test))
+  ;; can't shrink over non-discrete search space
+  value)
+
 (defmethod shrink ((value list) test)
   (flet ((elem-wise-shrink ()
            (loop for i from 0
@@ -95,6 +102,8 @@
        ;; there were no failures for lists of length-1, so start shrinking
        ;; elements instead
        (elem-wise-shrink)))))
+
+;;;; Generator shrinkers
 
 (defmethod shrink ((value int-generator) test)
   (with-obvious-accessors (cached-value) value
