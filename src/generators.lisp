@@ -290,8 +290,6 @@
            (funcall proceed)
         (setf bias old-bias)))))
 
-(defparameter *custom-generators* nil)
-
 (defmacro generator (exp &environment env)
   (cond
     ((atom exp) exp)
@@ -367,10 +365,10 @@
                      (list ,@(loop for slot in sorted-slots
                                 collect `(generator ,(second slot))))))))))
        (otherwise
-        (let* ((gen-name (first exp))
-               (gen-rule (cdr (assoc gen-name *custom-generators*))))
-          (cond
-            (gen-rule
+        (cond
+          ((get (first exp) 'generator-fun)
+           (let* ((gen-name (first exp))
+                  (gen-rule (get (first exp) 'generator-fun)))
              (multiple-value-bind (expansion expanded-p)
                  ;; I can't believe I finally found a legitimate use for this hack
                  (macroexpand-1 'generator-context env)
@@ -388,16 +386,15 @@
                                    (list `(,gen-name . ,gen-var)))))
                           (setf (sub-generator ,gen-var)
                                 (generator
-                                 ,(funcall gen-rule (rest exp))))))))))
-            (t exp))))))
+                                 ,(funcall gen-rule (rest exp)))))))))))
+          (t exp)))))
     (t exp)))
 
 (defmacro defgenerator (name params &body body)
   (with-gensyms (exp)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator) ())
-       (push (cons ',name
-                   (lambda (,exp)
+       (setf (get ',name 'generator-fun)
+             (lambda (,exp)
                      (destructuring-bind ,params ,exp
-                       ,@body)))
-             *custom-generators*))))
+                       ,@body))))))
