@@ -114,20 +114,22 @@
     :initform 0
     :accessor recursive-depth)))
 
-(defgeneric generate (generator))
+(define-layered-function generate (generator))
 
-(defmethod generate (generator)
+(define-layered-method generate
+  (generator)
   "Treat non-generators as constants."
   generator)
 
-(defmethod generate :around ((generator generator))
+(define-layered-method generate
+  :around ((generator generator))
   (setf (cached-value generator) (call-next-method)))
 
-(defmethod generate ((generator list-generator))
+(define-layered-method generate ((generator list-generator))
   (loop repeat (random *size*)
      collect (generate (sub-generator generator))))
 
-(defmethod generate ((generator tuple-generator))
+(define-layered-method generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))
 
 (defun random-element (list)
@@ -148,7 +150,7 @@
                                 collect (/ number total-weights))))
     normalized-weights))
 
-(defmethod bias (generator)
+(define-layered-method bias (generator)
   1.0)
 
 (let ((double-float-most-positive-fixnum
@@ -178,7 +180,7 @@
             generators weights thresholds selected-position chosen-generator)
     chosen-generator))
 
-(defmethod generate ((generator or-generator))
+(define-layered-method generate ((generator or-generator))
   (let ((chosen-generator ;;(random-element (sub-generators generator))
          (choose-generator (sub-generators generator))))
     (setf (cached-generator generator) chosen-generator)
@@ -230,13 +232,13 @@
     (_
      (lambda (test) (lambda (x) (or (< x low) (< high x) (funcall test x)))))))
 
-(defmethod generate ((generator int-generator))
+(define-layered-method generate ((generator int-generator))
   (funcall (generator-function generator)))
 
-(defmethod generate ((generator real-generator))
+(define-layered-method generate ((generator real-generator))
   (- (random (float (* 2 *size*))) *size*))
 
-(defmethod generate ((generator guard-generator))
+(define-layered-method generate ((generator guard-generator))
   (let ((try (generate (sub-generator generator))))
     (if (funcall (guard generator) try)
         try
@@ -254,7 +256,7 @@
   (mapcar #'slot-definition-name
           (closer-mop:class-slots (find-class struct-type))))
 
-(defmethod generate ((generator struct-generator))
+(define-layered-method generate ((generator struct-generator))
   (let* ((struct
           #-(or abcl allegro)
           (make-instance (struct-type generator))
@@ -266,11 +268,11 @@
                 (generate gen)))
     struct))
 
-(defmethod generate ((generator custom-generator))
+(define-layered-method generate ((generator custom-generator))
   (generate (sub-generator generator)))
 
 ;; should probably look into special slots in ContextL
-(defmethod generate :around ((generator custom-generator))
+(define-layered-method generate :around ((generator custom-generator))
   (with-obvious-accessors (recursive-depth) generator
     (let ((old-depth recursive-depth))
       (incf recursive-depth)
@@ -279,16 +281,30 @@
                                     (lambda () (call-next-method)))
         (setf recursive-depth old-depth)))))
 
-(defgeneric call-with-adjusted-bias (generator proceed)
+(define-layered-function call-with-adjusted-bias (generator proceed)
   (:documentation "Strategies for managing growth of recursive generators."))
 
-(defmethod call-with-adjusted-bias ((generator custom-generator) proceed)
+(define-layered-method call-with-adjusted-bias ((generator custom-generator) proceed)
   (with-obvious-accessors (bias) generator
     (let ((old-bias bias))
       (setf bias (* bias *recursive-bias-decay*))
       (unwind-protect
            (funcall proceed)
         (setf bias old-bias)))))
+
+(defgeneric propagate-bias-adjustment (generator))
+
+(define-layered-method propagate-bias-adjustment (generator))
+
+(define-layered-method propagate-bias-adjustment ((generator list-generator))
+  (propagate-bias-adjustment (sub-generator generator)))
+
+(define-layered-method propagate-bias-adjustment ((generator tuple-generator))
+  (mapc #'propagate-bias-adjustment (sub-generators generator)))
+
+(define-layered-method propagate-bias-adjustment ((generator or-generator)))
+
+(define-layered-method propagate-bias-adjustment ((generator custom-generator)))
 
 (defmacro generator (exp &environment env)
   (cond
@@ -368,7 +384,7 @@
         (cond
           ((get (first exp) 'generator-fun)
            (let* ((gen-name (first exp))
-                  (gen-rule (get (first exp) 'generator-fun)))
+                  (gen-rule (get gen-name 'generator-fun)))
              (multiple-value-bind (expansion expanded-p)
                  ;; I can't believe I finally found a legitimate use for this hack
                  (macroexpand-1 'generator-context env)
