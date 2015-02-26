@@ -373,17 +373,17 @@
                  ;; I can't believe I finally found a legitimate use for this hack
                  (macroexpand-1 'generator-context env)
                (if (and expanded-p
-                        (assoc gen-name expansion))
-                   `(symbol-value ',(cdr (assoc gen-name expansion)))
+                        (getf expansion gen-name))
+                   `(symbol-value ',(getf expansion gen-name))
                    (let ((gen-var (gensym (symbol-name gen-name))))
                      `(let ((,gen-var
                              (make-instance 'custom-generator :kind ',gen-name)))
                         (declare (special ,gen-var))
                         (symbol-macrolet
                             ((generator-context
-                              ,(if expanded-p (cons `(,gen-name . ,gen-var)
+                              ,(if expanded-p (append `(,gen-name ,gen-var)
                                                     expansion)
-                                   (list `(,gen-name . ,gen-var)))))
+                                   `(,gen-name ,gen-var))))
                           (setf (sub-generator ,gen-var)
                                 (generator
                                  ,(funcall gen-rule (rest exp)))))))))))
