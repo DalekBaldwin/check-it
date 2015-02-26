@@ -162,8 +162,7 @@
               until (>= (cached-value generator) 15))
            (is (= (shrink generator (constantly nil)) 15))))))
 
-(defgenerator derp (&rest rest-exp)
-  (declare (ignore rest-exp))
+(defgenerator derp ()
   `(or (integer) (derp)))
 
 (deftest test-custom-generator ()

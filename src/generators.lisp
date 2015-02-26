@@ -368,7 +368,7 @@
         (cond
           ((get (first exp) 'generator-fun)
            (let* ((gen-name (first exp))
-                  (gen-rule (get (first exp) 'generator-fun)))
+                  (gen-rule (get gen-name 'generator-fun)))
              (multiple-value-bind (expansion expanded-p)
                  ;; I can't believe I finally found a legitimate use for this hack
                  (macroexpand-1 'generator-context env)
@@ -395,6 +395,6 @@
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator) ())
        (setf (get ',name 'generator-fun)
-             (lambda (,exp)
-                     (destructuring-bind ,params ,exp
-                       ,@body))))))
+             (lambda (&rest ,exp)
+               (destructuring-bind (,params) ,exp
+                 ,@body))))))
