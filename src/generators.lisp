@@ -374,15 +374,14 @@
                  (macroexpand-1 'generator-context env)
                (if (and expanded-p
                         (getf expansion gen-name))
-                   `(symbol-value ',(getf expansion gen-name))
+                   (getf expansion gen-name)
                    (let ((gen-var (gensym (symbol-name gen-name))))
                      `(let ((,gen-var
                              (make-instance 'custom-generator :kind ',gen-name)))
-                        (declare (special ,gen-var))
                         (symbol-macrolet
                             ((generator-context
-                              ,(if expanded-p (append `(,gen-name ,gen-var)
-                                                    expansion)
+                              ,(if expanded-p
+                                   (append `(,gen-name ,gen-var) expansion)
                                    `(,gen-name ,gen-var))))
                           (setf (sub-generator ,gen-var)
                                 (generator
