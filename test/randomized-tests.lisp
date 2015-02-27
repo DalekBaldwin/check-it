@@ -181,3 +181,8 @@
             collect
               `(let ((generator (generator (parameterized ,i))))
                  (is (<= ,(- i) (generate generator) ,i))))))
+
+(deftest test-check-it ()
+  (let ((*num-trials* 5))
+    (check-it (generator (integer))
+              (lambda (x) (is (<= x *size*))))))

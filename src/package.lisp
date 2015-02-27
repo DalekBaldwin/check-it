@@ -10,7 +10,6 @@
            #:*num-trials*
            #:*bias-sensitivity*
            #:*recursive-bias-decay*
-
            
            #:generator
            #:generate
@@ -36,7 +35,9 @@
            #:slot-names
            #:slot-generators
            
-           #:defgenerator))
+           #:defgenerator
+           
+           #:check-it))
 
 (in-package :check-it)
 
