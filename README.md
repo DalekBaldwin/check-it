@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/DalekBaldwin/check-it.svg?branch=master)](https://travis-ci.org/DalekBaldwin/check-it)
+
 ![](http://www.textfiles.com/underconstruction/HoHotSpringsBath9452ssunder_construction_fire.gif) ![](http://www.textfiles.com/underconstruction/yoyosemitegorge3116Constructionbarmove33.gif)
 
 ![](http://www.textfiles.com/underconstruction/ColosseumStadium8141cuteconstruct.gif)
