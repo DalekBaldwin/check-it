@@ -1,6 +1,8 @@
 (in-package :check-it)
 
 (defparameter *size* 10)
+(defparameter *list-size* 20)
+(defparameter *list-size-decay* 0.8)
 (defparameter *num-trials* 100)
 (defparameter *bias-sensitivity* 6.0)
 (defparameter *recursive-bias-decay* 1.5)
@@ -124,8 +126,10 @@
   (setf (cached-value generator) (call-next-method)))
 
 (defmethod generate ((generator list-generator))
-  (loop repeat (random *size*)
-     collect (generate (sub-generator generator))))
+  (loop repeat (random *list-size*)
+     collect
+       (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
+         (generate (sub-generator generator)))))
 
 (defmethod generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))
@@ -381,8 +385,8 @@
                         (symbol-macrolet
                             ((generator-context
                               ,(if expanded-p
-                                   (append `(,gen-name ,gen-var) expansion)
-                                   `(,gen-name ,gen-var))))
+                                   (list* gen-name gen-var expansion)
+                                   (list gen-name gen-var))))
                           (setf (sub-generator ,gen-var)
                                 (generator
                                  ,(funcall gen-rule (rest exp)))))))))))

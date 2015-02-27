@@ -5,6 +5,12 @@
   (:export #:shrink
            
            #:*size*
+           #:*list-size*
+           #:*list-size-decay*
+           #:*num-trials*
+           #:*bias-sensitivity*
+           #:*recursive-bias-decay*
+
            
            #:generator
            #:generate
