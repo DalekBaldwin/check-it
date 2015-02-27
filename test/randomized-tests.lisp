@@ -171,3 +171,13 @@
     (loop for i from 1 to 20
        do
          (is (<= -10 (generate generator) 10)))))
+
+(defgenerator parameterized (min)
+  `(or (integer ,(- min) ,min) (parameterized)))
+
+(deftest test-parameterized-generator ()
+  #.`(progn
+       ,@(loop for i from 1 to 20
+            collect
+              `(let ((generator (generator (parameterized ,i))))
+                 (is (<= ,(- i) (generate generator) ,i))))))
