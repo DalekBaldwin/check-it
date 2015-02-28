@@ -159,7 +159,7 @@ Now here's the fun part. You can configure the `check-it` macro to automatically
 
 ```lisp
 ;; appended to my-test-file
-(DEFTEST CHECK-IT-GENERATED-TESTS::TEST1
+(DEFTEST MY-TEST-PACKAGE::TEST1
     NIL
   (IS (FUNCALL (LAMBDA (X) (<= X 5)) 6)))
 ```
