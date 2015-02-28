@@ -395,7 +395,7 @@
            (let* ((gen-name (first exp))
                   ;;(gen-rule (get gen-name 'generator-fun))
                   )
-             `(delay (make-instance ',gen-name))
+             `(make-instance ',gen-name)
              #+nil
              (multiple-value-bind (expansion expanded-p)
                  ;; I can't believe I finally found a legitimate use for this hack
@@ -427,6 +427,17 @@
              (lambda (&rest ,exp)
                (destructuring-bind (,params) ,exp
                  ,@body)))
+       (defmethod generate ((generator ,name))
+         (generate
+          (if (slot-boundp generator 'sub-generator)
+              (sub-generator generator)
+              (setf (sub-generator generator)
+                    (macrolet ((,gen-form ()
+                              (macrolet ((,name ()
+                                           (make-instance ',name)))
+                                ,@body)))
+                      (,gen-form))))))
+       #+nil
        (defmethod initialize-instance
            :after ((instance ,name) &rest initargs)
            (declare (ignore initargs))
