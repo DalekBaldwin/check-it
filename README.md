@@ -122,7 +122,8 @@ The change in bias at each recursive step is controlled by the parameter `*recur
 Additionally, the maximum possible list length is reduced with every `list` generation that occurs within the dynamic scope of another `list` generation.
 
 ```lisp
-(defgenerator list-explode () `(generator (or (integer) (list (list-explode)))))
+(defgenerator list-explode ()
+  `(generator (or (integer) (list (list-explode)))))
 
 (let ((*list-size* 10))
   (generate (generator (list-explode))))
@@ -135,7 +136,8 @@ Additionally, the maximum possible list length is reduced with every `list` gene
 But it's your responsibility not to write type specs that can't possibly generate anything other than unbounded values.
 
 ```lisp
-(defgenerator inherently-unbounded () `(generator (tuple (integer) (inherently-unbounded))))
+(defgenerator inherently-unbounded ()
+  `(generator (tuple (integer) (inherently-unbounded))))
 ```
 
 ## Checking
