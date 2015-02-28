@@ -10,10 +10,7 @@
 (defclass generator ()
   ((cached-value
     :initarg :cached-value
-    :accessor cached-value)
-   (bias
-    :initform 1.0
-    :accessor bias))
+    :accessor cached-value))
   (:documentation
    "Abstract base class for all generators. Not meant to be instantiated."))
 
@@ -420,7 +417,11 @@
   (declare (ignorable params))
   (with-gensyms (exp gen-form)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (defclass ,name (custom-generator) ())
+       (defclass ,name (custom-generator)
+         ((bias
+           :initform 1
+           :accessor bias
+           :allocation :class)))
        (setf (get ',name 'generator) t)
        #+nil
        (setf (get ',name 'generator-fun)
