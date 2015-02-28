@@ -135,7 +135,7 @@ Additionally, the maximum possible list length is reduced with every `list` gene
 But it's your responsibility not to write type specs that can't possibly generate anything other than unbounded values.
 
 ```lisp
-(defgenerator inherently-unbounded () `(tuple (integer) (inherently-unbounded)))
+(defgenerator inherently-unbounded () `(generator (tuple (integer) (inherently-unbounded))))
 ```
 
 ## Checking
