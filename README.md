@@ -96,7 +96,7 @@ You can define your own generator types with `defgenerator`. User-defined genera
 
 ```lisp
 ;; same range of values as (integer)
-(defgenerator recursive () `(or (integer) (recursive)))
+(defgenerator recursive () `(generator (or (integer) (recursive))))
 ```
 
 With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen exponential explosion.
@@ -104,15 +104,22 @@ With naive generation strategies, recursive generators can easily generate value
 When a user-defined generator appears as an alternative in an `or` generator, its relative probability of being chosen decreases with each recursive descent.
 
 ```lisp
-(defgenerator recursive-explode () `(list (or (integer) (recursive-explode))))
+(defgenerator tuple-explode ()
+  `(generator (tuple (or (integer) (tuple-explode))
+                     (or (integer) (tuple-explode))
+                     (or (integer) (tuple-explode)))))
+
+(let ((*recursive-bias-decay* 1.1))
+  (generate (generator (tuple-explode))))
+;; sample result: ((9 (5 7 -2) -5) (-3 (6 -7 2) (-9 -3 7)) -8)
 ```
 
-The change in bias at each recursive step is controlled by the parameter `*recursive-bias-decay*`, and the way biases of different alternatives interact to produce the actual relative probabilities is controlled by `*bias-sensitivity*`. The whole apparatus is set up in such a way that these parameters can be tuned without causing one alternative's probability to sharply shoot off toward zero or one, so you can play around with them and discover what values produce a reasonable distribution for your needs.
+The change in bias at each recursive step is controlled by the parameter `*recursive-bias-decay*`, and the way biases of different alternatives interact to produce the actual relative probabilities is controlled by `*bias-sensitivity*`. The whole apparatus is set up in such a way that these parameters can be tuned without causing one alternative's probability to sharply shoot off toward zero or one, so you can play around with them and discover values that produce a reasonable distribution for your needs.
 
 Additionally, the maximum possible list length is reduced with every `list` generation that occurs within the dynamic scope of another `list` generation.
 
 ```lisp
-(defgenerator list-explode () `(or (integer) (list (list-explode))))
+(defgenerator list-explode () `(generator (or (integer) (list (list-explode)))))
 ```
 
 But it's your responsibility not to write type specs that can't possibly generate anything other than unbounded values.
