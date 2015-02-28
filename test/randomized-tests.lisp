@@ -173,6 +173,6 @@
          (is (<= -10 (generate generator) 10)))))
 
 (deftest test-check-it ()
-  (let ((*num-trials* 5))
-    (check-it (generator (integer))
-              (lambda (x) (is (<= x *size*))))))
+  (let ((*num-trials* 50))
+    (is (check-it (generator (integer))
+                  (lambda (x) (<= x *size*))))))
