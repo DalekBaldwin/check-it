@@ -99,7 +99,7 @@ When a user-defined generator appears as an alternative in an `or` generator, it
 (defgenerator recursive-explode () `(list (or (integer) (recursive-explode))))
 ```
 
-Additionally, the maximum possible list length shrinks with every `list` generation that occurs within the dynamic scope of another `list` generation.
+Additionally, the maximum possible list length is reduced with every `list` generation that occurs within the dynamic scope of another `list` generation.
 
 ```lisp
 (defgenerator list-explode () `(or (integer) (list (list-explode))))
@@ -111,4 +111,28 @@ But it's your responsibility not to write type specs that can't possibly generat
 (defgenerator inherently-unbounded () `(tuple (integer) (inherently-unbounded))
 ```
 
-More to come...
+## Checking
+
+Use the `check-it` macro to perform a test run. Here's another useless example:
+
+```lisp
+(check-it (generator (integer))
+          (lambda (x) (integerp x)))
+```
+
+This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's type spec.
+
+Now here's the fun part. You can configure the `check-it` macro to add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails:
+
+```lisp
+(check-it (generator (integer))
+          (lambda (x) (integerp x))
+          :gen-output-file my-test-file
+          :gen-output-package :my-test-package
+          :gen-output-template
+          (lambda (test-form datum &optional package)
+            `(deftest ,(gentemp "TEST" package) ()
+               (is (funcall ,test-form ,datum)))))
+```
+
+This uses fairly naive code generation, but if you adhere to a certain workflow and follow a few simple guidelines it works fine. It is recommended that you output such tests to a special file that is initially filled only with the code you need to set up a test package and initialize a test suite in your preferred Common Lisp test framework. This file and its package should be loaded as part of your complete test system before any files and packages containing check-it tests. This way, any situation that failed a check-it test the last time you loaded your test system will fail a deterministic test the next time you load it, which should hopefully light a fire under your ass to fix already-discovered bugs before hunting for new ones.
