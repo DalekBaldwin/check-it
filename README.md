@@ -148,13 +148,20 @@ Now here's the fun part. You can configure the `check-it` macro to automatically
 
 ```lisp
 (check-it (generator (integer))
-          (lambda (x) (integerp x))
+          (lambda (x) (<= x 5))
           :gen-output-file my-test-file
           :gen-output-package :my-test-package
           :gen-output-template
           (lambda (test-form datum &optional package)
             `(deftest ,(gentemp "TEST" package) ()
                (is (funcall ,test-form ,datum)))))
+```
+
+```lisp
+;; appended to my-test-file
+(DEFTEST CHECK-IT-GENERATED-TESTS::TEST1
+    NIL
+  (IS (FUNCALL (LAMBDA (X) (<= X 5)) 6)))
 ```
 
 This uses fairly naive code generation, but if you adhere to a certain workflow and follow a few simple guidelines it works fine. It is recommended that you output such tests to a special file that is initially filled only with the code you need to set up a test package and initialize a test suite in your preferred Common Lisp test framework. This file and its package should be loaded as part of your complete test system before any files and packages containing check-it tests.

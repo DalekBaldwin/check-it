@@ -33,7 +33,7 @@
                                                  :if-does-not-exist :error)
                           (format ,stream "~%~S~%"
                                   (funcall ,gen-output-template
-                                           ,test-form
+                                           ',test-form
                                            ,shrunk
                                            ,gen-output-package)))))
                     (return-from ,trial-run nil)))))
