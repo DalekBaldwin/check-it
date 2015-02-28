@@ -119,6 +119,8 @@ When a user-defined generator appears as an alternative in an `or` generator, it
 (defgenerator recursive-explode () `(list (or (integer) (recursive-explode))))
 ```
 
+The change in bias at each recursive step is controlled by the parameter `*recursive-bias-decay*`, and the way biases of different alternatives interact to produce the actual relative probabilities is controlled by `*bias-sensitivity*`. The whole apparatus is set up in such a way that these parameters can be tuned without causing one alternative's probability to sharply shoot off toward zero or one, so you can play around with them and discover what values produce a reasonable distribution for your needs.
+
 Additionally, the maximum possible list length is reduced with every `list` generation that occurs within the dynamic scope of another `list` generation.
 
 ```lisp
