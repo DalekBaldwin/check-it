@@ -168,6 +168,8 @@ This uses fairly naive code generation, but if you adhere to a certain workflow 
 
 This way, any situation that failed a check-it test the last time you loaded your test system will fail a deterministic test the next time you load it, which should hopefully light a fire under your ass to fix already-discovered bugs before you hunt for new ones.
 
+`check-it` itself returns `t` if every trial passed and `nil` if one failed, so you can embed `check-it` forms within whatever test framework you're already using.
+
 ## Shrinking
 
 When a generated value fails a test, check-it searches for a simpler value as follows:
