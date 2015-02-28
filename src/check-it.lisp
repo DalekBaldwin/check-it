@@ -36,4 +36,5 @@
                                            ,test-form
                                            ,shrunk
                                            ,gen-output-package)))))
-                    (return-from ,trial-run)))))))))
+                    (return-from ,trial-run nil)))))
+         (return-from ,trial-run t)))))
