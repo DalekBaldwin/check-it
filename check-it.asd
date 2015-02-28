@@ -8,6 +8,11 @@
   :name "check-it"
   :serial t
   :author "Kyle Littler"
+  :license "LLGPL"
+  :description "A randomized property-based testing tool for Common Lisp."
+  :long-description
+  #.(uiop:read-file-string
+     (uiop:subpathname *load-pathname* "README.md"))
   :components
   ((:static-file "check-it.asd")
    (:module :src
@@ -17,7 +22,12 @@
                          (:file "shrink")
                          (:file "check-it"))
             :serial t))
-  :depends-on (:alexandria :closer-mop :optima))
+  :depends-on (:alexandria :closer-mop :optima)
+  :in-order-to ((test-op (load-op :check-it-test)))
+  :perform (test-op :after (op c)
+                    (funcall
+                     (intern #.(string '#:run-all-tests)
+                             :check-it-test))))
 
 (defsystem :check-it-test
   :name "check-it-test"
