@@ -163,7 +163,7 @@
            (is (= (shrink generator (constantly nil)) 15))))))
 
 (defgenerator derp ()
-  `(or (integer) (derp)))
+  `(generator (or (integer) (derp))))
 
 (deftest test-custom-generator ()
   (let ((generator (generator (derp)))
@@ -171,16 +171,6 @@
     (loop for i from 1 to 20
        do
          (is (<= -10 (generate generator) 10)))))
-
-(defgenerator parameterized (min)
-  `(or (integer ,(- min) ,min) (parameterized)))
-
-(deftest test-parameterized-generator ()
-  #.`(progn
-       ,@(loop for i from 1 to 20
-            collect
-              `(let ((generator (generator (parameterized ,i))))
-                 (is (<= ,(- i) (generate generator) ,i))))))
 
 (deftest test-check-it ()
   (let ((*num-trials* 5))

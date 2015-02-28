@@ -116,7 +116,27 @@
     :initform 0
     :accessor recursive-depth)))
 
+(defclass lazy-form ()
+  ((form
+    :initarg :form
+    :accessor form)
+   (forced-value
+    :accessor forced-value)))
+
+(defmacro delay (form)
+  `(make-instance 'lazy-form :form (lambda () ,form)))
+
+(defgeneric force (form)
+  (:method (form) form)
+  (:method ((form lazy-form))
+    (if (slot-boundp form 'forced-value)
+        (forced-value form)
+        (setf (forced-value form) (funcall (form form))))))
+
 (defgeneric generate (generator))
+
+(defmethod generate ((generator lazy-form))
+  (generate (force generator)))
 
 (defmethod generate (generator)
   "Treat non-generators as constants."
@@ -370,9 +390,13 @@
                                 collect `(generator ,(second slot))))))))))
        (otherwise
         (cond
-          ((get (first exp) 'generator-fun)
+          (;;(get (first exp) 'generator-fun)
+           (get (first exp) 'generator)
            (let* ((gen-name (first exp))
-                  (gen-rule (get gen-name 'generator-fun)))
+                  ;;(gen-rule (get gen-name 'generator-fun))
+                  )
+             `(delay (make-instance ',gen-name))
+             #+nil
              (multiple-value-bind (expansion expanded-p)
                  ;; I can't believe I finally found a legitimate use for this hack
                  (macroexpand-1 'generator-context env)
@@ -388,16 +412,27 @@
                                    (list* gen-name gen-var expansion)
                                    (list gen-name gen-var))))
                           (setf (sub-generator ,gen-var)
-                                (generator
-                                 ,(funcall gen-rule (rest exp)))))))))))
+                                ,(funcall gen-rule (rest exp))))))))))
           (t exp)))))
     (t exp)))
 
 (defmacro defgenerator (name params &body body)
-  (with-gensyms (exp)
+  (declare (ignorable params))
+  (with-gensyms (exp gen-form)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator) ())
+       (setf (get ',name 'generator) t)
+       #+nil
        (setf (get ',name 'generator-fun)
              (lambda (&rest ,exp)
                (destructuring-bind (,params) ,exp
-                 ,@body))))))
+                 ,@body)))
+       (defmethod initialize-instance
+           :after ((instance ,name) &rest initargs)
+           (declare (ignore initargs))
+           (setf (sub-generator instance)
+                 (macrolet ((,gen-form ()
+                              (macrolet ((,name ()
+                                           (delay (make-instance ',name))))
+                                ,@body)))
+                   (,gen-form)))))))
