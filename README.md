@@ -104,14 +104,17 @@ With naive generation strategies, recursive generators can easily generate value
 When a user-defined generator appears as an alternative in an `or` generator, its relative probability of being chosen decreases with each recursive descent.
 
 ```lisp
+;; normally there would be an 87.5% chance of recursing on each generation
+;; essentially guaranteeing unbounded growth
 (defgenerator tuple-explode ()
   `(generator (tuple (or (integer) (tuple-explode))
                      (or (integer) (tuple-explode))
                      (or (integer) (tuple-explode)))))
 
-(let ((*recursive-bias-decay* 1.1))
+(let ((*recursive-bias-decay* 1.2)
+      (*bias-sensitivity* 1.5))
   (generate (generator (tuple-explode))))
-;; sample result: ((9 (5 7 -2) -5) (-3 (6 -7 2) (-9 -3 7)) -8)
+;; sample result: ((((-6 ((9 -10 2) 8 -7) 8) 9 9) 8 2) 7 5)
 ```
 
 The change in bias at each recursive step is controlled by the parameter `*recursive-bias-decay*`, and the way biases of different alternatives interact to produce the actual relative probabilities is controlled by `*bias-sensitivity*`. The whole apparatus is set up in such a way that these parameters can be tuned without causing one alternative's probability to sharply shoot off toward zero or one, so you can play around with them and discover values that produce a reasonable distribution for your needs.
@@ -120,6 +123,13 @@ Additionally, the maximum possible list length is reduced with every `list` gene
 
 ```lisp
 (defgenerator list-explode () `(generator (or (integer) (list (list-explode)))))
+
+(let ((*list-size* 10))
+  (generate (generator (list-explode))))
+;; sample result:
+;; ((((-5 -9 (-7 -4)) NIL NIL (6) NIL) (-7 (3 (-4 (NIL)))) (5 -3) 3
+;;   ((1 (4) 5) NIL ((NIL) -10)) -5 9)
+;;  ((((-3) -6) NIL -4 (-5) -4)) ((-9) 0 1 0 3) -3 NIL)
 ```
 
 But it's your responsibility not to write type specs that can't possibly generate anything other than unbounded values.
