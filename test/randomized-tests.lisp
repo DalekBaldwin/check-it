@@ -172,6 +172,18 @@
        do
          (is (<= -10 (generate generator) 10)))))
 
+(defgenerator herp ()
+  `(generator (or (integer 10) (herp))))
+
+(deftest test-custom-generator-shrink ()
+  (let ((generator (generator (herp)))
+        (*size* 20))
+    (loop for i from 1 to 20
+         do
+         (progn
+           (generate generator)
+           (is (= (shrink generator #'int-tester) 10))))))
+
 (deftest test-check-it ()
   (let ((*num-trials* 50))
     (is (check-it (generator (integer))
