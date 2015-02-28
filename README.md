@@ -165,6 +165,6 @@ A `real` generator doesn't shrink, because the shrinkage procedure only really m
 
 A `list` generator shrinks by repeatedly removing elements from the list and/or shrinking individual elements while respecting the type spec of the subgenerator.
 
-An `or` generator shrinks by shrinking the one generator among its alternatives that was involved in generating the failed value. However, if this generator's value cannot be shrunk further, and other alternatives available to the `or` generator specify constant values, then one of those constant values may be substituted instead.
+An `or` generator shrinks by shrinking the one generator among its alternatives that was involved in generating the failed value. However, if this generator's value cannot be shrunk further, and other alternatives available to the `or` generator specify constant values, then one of those constant values may be substituted instead. So if the generator `(or (integer 5) :a-keyword)` failed after generating 5 from the `integer` subgenerator, check-it will attempt to use `:a-keyword`. This opens up more possible shrinkage paths in the overall space defined by the `or` generator's parent generators.
 
 Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec.
