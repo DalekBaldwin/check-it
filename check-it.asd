@@ -7,6 +7,7 @@
 (defsystem :check-it
   :name "check-it"
   :serial t
+  :author "Kyle Littler"
   :components
   ((:static-file "check-it.asd")
    (:module :src
