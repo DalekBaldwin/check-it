@@ -113,27 +113,7 @@
     :initform 0
     :accessor recursive-depth)))
 
-(defclass lazy-form ()
-  ((form
-    :initarg :form
-    :accessor form)
-   (forced-value
-    :accessor forced-value)))
-
-(defmacro delay (form)
-  `(make-instance 'lazy-form :form (lambda () ,form)))
-
-(defgeneric force (form)
-  (:method (form) form)
-  (:method ((form lazy-form))
-    (if (slot-boundp form 'forced-value)
-        (forced-value form)
-        (setf (forced-value form) (funcall (form form))))))
-
 (defgeneric generate (generator))
-
-(defmethod generate ((generator lazy-form))
-  (generate (force generator)))
 
 (defmethod generate (generator)
   "Treat non-generators as constants."
@@ -395,7 +375,7 @@
 
 (defmacro defgenerator (name params &body body)
   (declare (ignorable params))
-  (with-gensyms (exp gen-form)
+  (with-gensyms (gen-form)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator)
          ((bias
@@ -409,5 +389,5 @@
               (sub-generator generator)
               (setf (sub-generator generator)
                     (macrolet ((,gen-form ()
-                                 (progn ,@body)))
+                                 `(progn ,@(list ,@body))))
                       (,gen-form)))))))))

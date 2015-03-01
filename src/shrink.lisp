@@ -6,9 +6,6 @@
   (declare (ignore test))
   value)
 
-(defmethod shrink ((value lazy-form) test)
-  (shrink (force value) test))
-
 (defun copy-structure-and-slots (structure slot-names)
   (let ((copy (make-instance (class-of structure))))
     (loop for slot-name in slot-names
