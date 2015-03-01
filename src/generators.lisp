@@ -387,29 +387,9 @@
                                 collect `(generator ,(second slot))))))))))
        (otherwise
         (cond
-          (;;(get (first exp) 'generator-fun)
-           (get (first exp) 'generator)
-           (let* ((gen-name (first exp))
-                  ;;(gen-rule (get gen-name 'generator-fun))
-                  )
-             `(make-instance ',gen-name)
-             #+nil
-             (multiple-value-bind (expansion expanded-p)
-                 ;; I can't believe I finally found a legitimate use for this hack
-                 (macroexpand-1 'generator-context env)
-               (if (and expanded-p
-                        (getf expansion gen-name))
-                   (getf expansion gen-name)
-                   (let ((gen-var (gensym (symbol-name gen-name))))
-                     `(let ((,gen-var
-                             (make-instance 'custom-generator :kind ',gen-name)))
-                        (symbol-macrolet
-                            ((generator-context
-                              ,(if expanded-p
-                                   (list* gen-name gen-var expansion)
-                                   (list gen-name gen-var))))
-                          (setf (sub-generator ,gen-var)
-                                ,(funcall gen-rule (rest exp))))))))))
+          ((get (first exp) 'generator)
+           (let* ((gen-name (first exp)))
+             `(make-instance ',gen-name)))
           (t exp)))))
     (t exp)))
 
@@ -423,28 +403,11 @@
            :accessor bias
            :allocation :class)))
        (setf (get ',name 'generator) t)
-       #+nil
-       (setf (get ',name 'generator-fun)
-             (lambda (&rest ,exp)
-               (destructuring-bind (,params) ,exp
-                 ,@body)))
        (defmethod generate ((generator ,name))
          (generate
           (if (slot-boundp generator 'sub-generator)
               (sub-generator generator)
               (setf (sub-generator generator)
                     (macrolet ((,gen-form ()
-                              (macrolet ((,name ()
-                                           (make-instance ',name)))
-                                ,@body)))
-                      (,gen-form))))))
-       #+nil
-       (defmethod initialize-instance
-           :after ((instance ,name) &rest initargs)
-           (declare (ignore initargs))
-           (setf (sub-generator instance)
-                 (macrolet ((,gen-form ()
-                              (macrolet ((,name ()
-                                           (delay (make-instance ',name))))
-                                ,@body)))
-                   (,gen-form)))))))
+                                 (progn ,@body)))
+                      (,gen-form)))))))))
