@@ -145,11 +145,21 @@ But it's your responsibility not to write type specs that can't possibly generat
 Use the `check-it` macro to perform a test run. Here's another useless example:
 
 ```lisp
-(check-it (generator (integer))
-          (lambda (x) (integerp x)))
+(let ((*num-trials* 100))
+  (check-it (generator (integer))
+            (lambda (x) (integerp x))))
 ```
 
-This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's composite type spec.
+This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's composite type spec, and print a failure description to `*standard-output*`.
+
+`check-it` itself returns `t` if every trial passed and `nil` if one failed, so you can embed `check-it` forms within whatever test framework you're already using.
+
+```lisp
+(deftest useless-test ()
+  (let ((*num-trials* 100))
+    (is (check-it (generator (integer))
+                  (lambda (x) (integerp x))))))
+```
 
 Now here's the fun part. You can configure the `check-it` macro to automatically add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails:
 
@@ -174,8 +184,6 @@ Now here's the fun part. You can configure the `check-it` macro to automatically
 This uses fairly naive code generation, but if you adhere to a certain workflow and follow a few simple guidelines it works fine. It is recommended that you output such tests to a special file that is initially filled only with the code you need to set up a test package and initialize a test suite in your preferred Common Lisp test framework. This file and its package should be loaded as part of your complete test system before any files and packages containing check-it tests.
 
 This way, any situation that failed a check-it test the last time you loaded your test system will fail a deterministic test the next time you load it, which should hopefully light a fire under your ass to fix already-discovered bugs before you hunt for new ones.
-
-`check-it` itself returns `t` if every trial passed and `nil` if one failed, so you can embed `check-it` forms within whatever test framework you're already using.
 
 ## Shrinking
 
