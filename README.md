@@ -163,7 +163,7 @@ This will generate `*num-trials*` random values and test them against the test p
                   (lambda (x) (integerp x))))))
 ```
 
-Now here's the fun part. You can configure the `check-it` macro to automatically add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails. Here's the worst example yet::
+Now here's the fun part. You can configure the `check-it` macro to automatically add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails. Here's the worst example yet:
 
 ```lisp
 (check-it (generator (integer))
