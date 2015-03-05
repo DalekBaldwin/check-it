@@ -90,6 +90,8 @@ On ABCL and Allegro CL I haven't found a way to construct a struct given its typ
 (struct a-struct make-a-struct :a-slot (integer) :another-slot (real))
 ```
 
+Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures within your test code. But for more complicated specifications, you need...
+
 ### User-Defined Generators
 
 You can define your own generator types with `defgenerator`. User-defined generator types can be recursive. Here's a useless example:
@@ -161,7 +163,7 @@ This will generate `*num-trials*` random values and test them against the test p
                   (lambda (x) (integerp x))))))
 ```
 
-Now here's the fun part. You can configure the `check-it` macro to automatically add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails:
+Now here's the fun part. You can configure the `check-it` macro to automatically add new deterministic regression tests to your project using the shrunken failure value when a randomized test fails. Here's the worst example yet::
 
 ```lisp
 (check-it (generator (integer))
@@ -174,8 +176,9 @@ Now here's the fun part. You can configure the `check-it` macro to automatically
                (is (funcall ,test-form ,datum)))))
 ```
 
+This will (most likely) discover that 6 is the smallest value that fails the test, and append the following code to `my-test-file`:
+
 ```lisp
-;; appended to my-test-file
 (DEFTEST MY-TEST-PACKAGE::TEST1
     NIL
   (IS (FUNCALL (LAMBDA (X) (<= X 5)) 6)))
