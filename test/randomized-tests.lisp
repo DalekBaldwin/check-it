@@ -34,6 +34,27 @@
               do
                 (is (<= (- *size*) (generate generator) *size*)))))))
 
+(deftest test-real-generate ()
+  (loop for size in (list 10 20 50 300)
+     do
+       (let ((*size* size))
+         (let ((generator (generator (real * 2))))
+           (loop for i from 1 to 100
+              do
+                (is (<= (- *size*) (generate generator) 2))))
+         (let ((generator (generator (real -2 *))))
+           (loop for i from 1 to 100
+              do
+                (is (<= -2 (generate generator) *size*))))
+         (let ((generator (generator (real -2 2))))
+           (loop for i from 1 to 100
+              do
+                (is (<= -2 (generate generator) 2))))
+         (let ((generator (generator (real))))
+           (loop for i from 1 to 100
+              do
+                (is (<= (- *size*) (generate generator) *size*)))))))
+
 ;;;; Shrink results of generators
 
 (deftest test-int-generate-shrink ()
