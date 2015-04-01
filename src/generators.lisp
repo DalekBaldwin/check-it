@@ -235,7 +235,7 @@
   (funcall (generator-function generator)))
 
 (defmethod generate ((generator real-generator))
-  (- (random (float (* 2 *size*))) *size*))
+  (funcall (generator-function generator)))
 
 (defmethod generate ((generator guard-generator))
   (let ((try (generate (sub-generator generator))))
