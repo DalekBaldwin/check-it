@@ -122,7 +122,7 @@
   (cached-value value))
 
 (defmethod shrink ((value or-generator) test)
-  "If all of the untried alternatives are constant, they can be trivially
+  "If any of the untried alternatives are constant, they can be trivially
 considered to constitute a search space of a complexity smaller than or equal to
 that of the alternative that was originally tried."
   (with-obvious-accessors (cached-value cached-generator sub-generators) value

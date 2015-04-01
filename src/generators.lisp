@@ -379,7 +379,7 @@
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator)
          ((bias
-           :initform 1
+           :initform 1.0
            :accessor bias
            :allocation :class)))
        (setf (get ',name 'generator) t)
