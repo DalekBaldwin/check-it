@@ -291,7 +291,7 @@
            (funcall proceed)
         (setf bias old-bias)))))
 
-(defmacro generator (exp &environment env)
+(defun expand-generator (exp)
   (cond
     ((atom exp) exp)
     ((symbolp (first exp))
@@ -325,19 +325,19 @@
                                              ''*
                                              (third exp))))))))
        (list
-        `(make-instance 'list-generator :sub-generator (generator ,(second exp))))
+        `(make-instance 'list-generator :sub-generator ,(expand-generator (second exp))))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
-                                                   collect `(generator ,elem)))))
+                                                   collect (expand-generator elem)))))
        (or
         `(make-instance 'or-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
-                                                   collect `(generator ,elem)))))
+                                                   collect (expand-generator elem)))))
        (guard
         `(make-instance 'guard-generator
                         :guard ,(second exp)
-                        :sub-generator (generator ,(third exp))))
+                        :sub-generator ,(expand-generator (third exp))))
        (struct
         (let* ((struct-type (second exp))
                (slot-names (struct-type-slot-names struct-type))
@@ -364,7 +364,7 @@
                      :slot-keywords (list ,@(mapcar #'first sorted-slots))
                      :slot-generators
                      (list ,@(loop for slot in sorted-slots
-                                collect `(generator ,(second slot))))))))))
+                                collect (expand-generator (second slot))))))))))
        (otherwise
         (cond
           ((get (first exp) 'generator)
@@ -372,6 +372,9 @@
              `(make-instance ',gen-name)))
           (t exp)))))
     (t exp)))
+
+(defmacro generator (exp)
+  (expand-generator exp))
 
 (defmacro defgenerator (name params &body body)
   (declare (ignorable params))
