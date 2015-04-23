@@ -2,7 +2,9 @@
 
 (defmacro regression-case (name datum)
   `(push
-    ,datum
+    ;; Some external representations can't be dumped to FASL files, so for now
+    ;; it's simplest to delay loading serialized forms until runtime
+    (eval (read-from-string ,datum))
     (get ',name 'regression-cases)))
 
 (defun check-it% (test-form generator test
@@ -38,11 +40,10 @@
                                         :direction :output
                                         :if-exists :append
                                         :if-does-not-exist :error)
-                       (format s "~%~S~%"
+                       (format s "~&~S~%"
                                `(regression-case
                                  ,regression-id
-                                 (eval (read-from-string
-                                        ,(format nil "~S" shrunk))))))))
+                                 ,(format nil "~S" shrunk))))))
                  (return-from trial-run nil))))))
     (return-from trial-run t)))
 

@@ -37,6 +37,7 @@
            
            #:defgenerator
            
+           #:regression-case
            #:check-it))
 
 (in-package :check-it)
