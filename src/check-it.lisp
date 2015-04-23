@@ -7,6 +7,8 @@
     (eval (read-from-string ,datum))
     (get ',name 'regression-cases)))
 
+(defparameter *check-it-output* *standard-output*)
+
 (defun check-it% (test-form generator test
                   &key (random-state t) regression-id regression-file)
   (block trial-run
@@ -15,7 +17,7 @@
          do
            (let ((passed (funcall test regression-case)))
              (unless passed
-               (format t "~&Test ~A failed regression ~A with arg ~A"
+               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A"
                        test-form
                        regression-id
                        regression-case)
@@ -27,13 +29,14 @@
              (generate generator)
              (let ((passed (funcall test (cached-value generator))))
                (unless passed
-                 (format t "~&Test ~A ~A failed with random state:~%~S~%with arg ~A~%"
+                 (format *check-it-output*
+                         "~&Test ~A ~A failed with random state:~%~S~%with arg ~A~%"
                          test-form
                          test
                          *random-state*
                          (cached-value generator))
                  (let ((shrunk (shrink generator test)))
-                   (format t "~&Shrunken failure case:~%~A~%" shrunk)
+                   (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
                    (when regression-file
                      (push shrunk (get regression-id 'regression-cases))
                      (with-open-file (s regression-file
