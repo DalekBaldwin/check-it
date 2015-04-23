@@ -113,7 +113,7 @@ You can define your own generator types with `defgenerator`. User-defined genera
 (defgenerator recursive () `(generator (or (integer) (recursive))))
 ```
 
-With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen exponential explosion.
+With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen the feedback explosion of recursively-generated data structures.
 
 When a user-defined generator appears as an alternative in an `or` generator, its relative probability of being chosen decreases with each recursive descent.
 
