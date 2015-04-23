@@ -1,40 +1,61 @@
 (in-package :check-it)
 
-(defparameter *test-output-template*
-  (lambda (test-form datum &optional package)
-    `(deftest ,(gentemp "TEST" package) ()
-       (is (funcall ,test-form ,datum)))))
+(defmacro regression-case (name datum)
+  `(push
+    ;; Some external representations can't be dumped to FASL files, so for now
+    ;; it's simplest to delay loading serialized forms until runtime
+    (eval (read-from-string ,datum))
+    (get ',name 'regression-cases)))
 
-(defmacro check-it (generator-form test-form
-                    &key (random-state t)
-                      gen-output-file gen-output-package gen-output-template)
-  (with-gensyms (gen test trial-run passed state shrunk stream)
-    `(let ((,gen ,generator-form)
-           (,test ,test-form))
-       (block ,trial-run
-         (setf *random-state* (make-random-state ,random-state))
-         (loop repeat *num-trials*
-            do
-              (progn
-                (generate ,gen)
-                (let ((,state *random-state*)
-                      (,passed (funcall ,test (cached-value ,gen))))
-                  (unless ,passed
-                    (format t "~&Test ~A failed with random state:~%~S~%with arg ~A"
-                            ',test-form
-                            ,state
-                            (cached-value ,gen))
-                    (let ((,shrunk (shrink ,gen ,test)))
-                      (format t "~&Shrunken failure case:~%~A" ,shrunk)
-                      (when ,gen-output-file
-                        (with-open-file (,stream ,gen-output-file
-                                                 :direction :output
-                                                 :if-exists :append
-                                                 :if-does-not-exist :error)
-                          (format ,stream "~%~S~%"
-                                  (funcall ,gen-output-template
-                                           ',test-form
-                                           ,shrunk
-                                           ,gen-output-package)))))
-                    (return-from ,trial-run nil)))))
-         (return-from ,trial-run t)))))
+(defparameter *check-it-output* *standard-output*)
+
+(defun check-it% (test-form generator test
+                  &key (random-state t) regression-id regression-file)
+  (block trial-run
+    (when regression-id
+      (loop for regression-case in (get regression-id 'regression-cases)
+         do
+           (let ((passed (funcall test regression-case)))
+             (unless passed
+               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A"
+                       test-form
+                       regression-id
+                       regression-case)
+               (return-from trial-run nil)))))
+    (let ((*random-state* (make-random-state random-state)))
+      (loop repeat *num-trials*
+         do
+           (progn
+             (generate generator)
+             (let ((passed (funcall test (cached-value generator))))
+               (unless passed
+                 (format *check-it-output*
+                         "~&Test ~A ~A failed with random state:~%~S~%with arg ~A~%"
+                         test-form
+                         test
+                         *random-state*
+                         (cached-value generator))
+                 (let ((shrunk (shrink generator test)))
+                   (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
+                   (when regression-file
+                     (push shrunk (get regression-id 'regression-cases))
+                     (with-open-file (s regression-file
+                                        :direction :output
+                                        :if-exists :append
+                                        :if-does-not-exist :error)
+                       (format s "~&~S~%"
+                               `(regression-case
+                                 ,regression-id
+                                 ,(format nil "~S" shrunk))))))
+                 (return-from trial-run nil))))))
+    (return-from trial-run t)))
+
+(defmacro check-it (generator test
+                    &key
+                      (random-state t random-state-supplied)
+                      (regression-id nil regression-id-supplied)
+                      (regression-file nil regression-file-supplied))
+  `(check-it% ',test ,generator ,test
+              ,@(when random-state-supplied `(:random-state ,random-state))
+              ,@(when regression-id-supplied `(:regression-id ',regression-id))
+              ,@(when regression-file-supplied `(:regression-file ,regression-file))))
