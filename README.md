@@ -175,6 +175,18 @@ This will generate `*num-trials*` random values and test them against the test p
                   (lambda (x) (integerp x))))))
 ```
 
+This would log a single assertion in the framework's test statistics even though as many as `*num-trials*` checks would be performed. As a matter of taste, you may want to embed this sort of assertion within the `check-it` form instead, but remember that this will lead to a different total test count depending on how many checks pass before the first failure is detected.
+
+Other framework-specific assertions, such as declaring an expected error, might only make sense inside the `check-it` form:
+
+```lisp
+(deftest test-signals ()
+  (check-it (generator (integer))
+            (lambda (x)
+              (declare (ignore x))
+              (signals error (signal 'error)))))
+```
+
 ### Regression Cases
 
 You can configure the `check-it` macro to automatically add new deterministic regression tests to your project when a randomized test fails. Here's the worst example yet:
