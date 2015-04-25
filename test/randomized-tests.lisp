@@ -209,3 +209,9 @@
   (let ((*num-trials* 50))
     (is (check-it (generator (integer))
                   (lambda (x) (<= x *size*))))))
+
+(deftest test-signals ()
+  (check-it (generator (integer))
+            (lambda (x)
+              (declare (ignore x))
+              (signals error (signal 'error)))))
