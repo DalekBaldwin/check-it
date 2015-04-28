@@ -59,6 +59,17 @@
       (lower-limit upper-limit generator-function) instance
       (setf generator-function (real-generator-function lower-limit upper-limit))))
 
+(defclass char-generator (simple-generator)
+  ((lower-limit
+    :initarg :lower-limit
+    :accessor lower-limit
+    :initform '*)
+   (upper-limit
+    :initarg :upper-limit
+    :accessor lower-limit
+    :initform '*)
+   (generator-function
+    :accessor generator-function)))
 (defclass list-generator (generator)
   ((sub-generator
     :initarg :sub-generator
