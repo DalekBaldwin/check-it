@@ -70,6 +70,14 @@
     :initform '*)
    (generator-function
     :accessor generator-function)))
+
+(defmethod initialize-instance
+    :after ((instance char-generator) &rest initargs)
+  (declare (ignore initargs))
+  (with-obvious-accessors
+      (lower-limit upper-limit generator-function) instance
+    (setf generator-function (char-generator-function lower-limit upper-limit))))
+
 (defclass list-generator (generator)
   ((sub-generator
     :initarg :sub-generator
@@ -230,6 +238,24 @@
        (let ((new-high (* (min (abs high) *size*) (signum high)))
              (new-low (* (min (abs high) *size*) (signum low))))
          (+ (random (float (- new-high new-low))) new-low))))))
+
+(defun char-generator-function (low high)
+  (match (cons low high)
+    ((cons '* '*)
+     (lambda () (code-char (random 128))))
+    ((cons '* _)
+     (lambda ()
+       (let ((new-high (min high 128)))
+             (code-char (random new-high)))))
+    ((cons _ '*)
+     (lambda ()
+       (let ((new-low (max low 0)))
+         (code-char (+ (random (- 128 new-low)) new-low)))))
+    (_
+     (lambda ()
+       (let ((new-high (min high 128))
+             (new-low (max low 0)))
+         (code-char (+ (random (- new-high new-low)) new-low)))))))
 
 (defun int-shrinker-predicate (low high)
   (match (cons low high)
