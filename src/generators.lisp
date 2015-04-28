@@ -274,6 +274,9 @@
 (defmethod generate ((generator real-generator))
   (funcall (generator-function generator)))
 
+(defmethod generate ((generator char-generator))
+  (funcall (generator-function generator)))
+
 (defmethod generate ((generator guard-generator))
   (let ((try (generate (sub-generator generator))))
     (if (funcall (guard generator) try)
@@ -350,6 +353,19 @@
                                              (third exp))))))))
        (real
         `(make-instance 'real-generator
+                        ,@(when (second exp)
+                                (append
+                                 (list :lower-limit
+                                       (if (eql (second exp) '*)
+                                           ''*
+                                           (second exp)))
+                                 (when (third exp)
+                                   (list :upper-limit
+                                         (if (eql (third exp) '*)
+                                             ''*
+                                             (third exp))))))))
+       (character
+        `(make-instance 'char-generator
                         ,@(when (second exp)
                                 (append
                                  (list :lower-limit
