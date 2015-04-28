@@ -66,7 +66,7 @@
     :initform '*)
    (upper-limit
     :initarg :upper-limit
-    :accessor lower-limit
+    :accessor upper-limit
     :initform '*)
    (generator-function
     :accessor generator-function)))
