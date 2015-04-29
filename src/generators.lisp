@@ -456,3 +456,10 @@
 (defgenerator alphanumeric ()
   `(generator (or (alpha)
                   (character 48 58))))
+
+(defgenerator str ()
+  `(let ((char-list (generate (generator (list (alphanumeric))))))
+     (generator (reduce (lambda (result current)
+                          (concatenate 'string result (princ-to-string current)))
+                        (rest char-list)
+                        :initial-value (princ-to-string (first char-list))))))
