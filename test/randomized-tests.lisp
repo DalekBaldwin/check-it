@@ -68,6 +68,17 @@
                        (char-code (generate generator))
                        (or (and (eq '* (second params)) 127) (second params))))))))
 
+(deftest test-alpha-generate ()
+  (loop for generator in (list (generator (alpha))
+                               (generator (alphanumeric)))
+     do
+       (loop for i from 1 to 100
+        do
+          (let ((random-char (generate generator)))
+            (is (or (<= 48 (char-code random-char) 57)
+                    (<= 65 (char-code random-char) 90)
+                    (<= 97 (char-code random-char) 122)))))))
+
 ;;;; Shrink results of generators
 
 (deftest test-int-generate-shrink ()
