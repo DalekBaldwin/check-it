@@ -452,3 +452,7 @@
 (defgenerator alpha ()
   `(generator (or (character 65 91)
                   (character 97 123))))
+
+(defgenerator alphanumeric ()
+  `(generator (or (alpha)
+                  (character 48 58))))
