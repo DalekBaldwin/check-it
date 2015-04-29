@@ -27,6 +27,10 @@
            #:tuple
            #:struct
 
+           #:alpha
+           #:alphanumeric
+           #:string
+
            #:cached-value
            #:cached-generator
            #:element
