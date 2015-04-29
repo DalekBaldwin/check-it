@@ -3,29 +3,30 @@
 (defpackage :check-it
   (:use :cl :alexandria :optima)
   (:export #:shrink
-           
+
            #:*size*
            #:*list-size*
            #:*list-size-decay*
            #:*num-trials*
            #:*bias-sensitivity*
            #:*recursive-bias-decay*
-           
+
            #:generator
            #:generate
-           
+
            #:int-generator
            #:real-generator
+           #:char-generator
            #:list-generator
            #:tuple-generator
            #:or-generator
            #:guard-generator
            #:object-generator
            #:generate
-           
+
            #:tuple
            #:struct
-           
+
            #:cached-value
            #:cached-generator
            #:element
@@ -34,9 +35,9 @@
            #:constructor
            #:slot-names
            #:slot-generators
-           
+
            #:defgenerator
-           
+
            #:*check-it-output*
            #:regression-case
            #:check-it))
