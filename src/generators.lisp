@@ -447,3 +447,7 @@
                     (macrolet ((,gen-form ()
                                  `(progn ,@(list ,@body))))
                       (,gen-form)))))))))
+
+(defgenerator alpha ()
+  `(generator (or (character 65 91)
+                  (character 97 123))))
