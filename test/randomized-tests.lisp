@@ -59,6 +59,15 @@
               do
                 (is (<= (- *size*) (generate generator) *size*)))))))
 
+(deftest test-char-generate ()
+  (loop for params in '((* *) (* 25) (25 *) (25 26))
+     do (let ((generator (generator (character (first params) (second params)))))
+          (loop for i from 1 to 100
+             do
+               (is (<= (or (and (eq '* (first params)) 0) (first params))
+                       (char-code (generate generator))
+                       (or (and (eq '* (second params)) 127) (second params))))))))
+
 ;;;; Shrink results of generators
 
 (deftest test-int-generate-shrink ()
