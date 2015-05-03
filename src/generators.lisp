@@ -382,6 +382,14 @@
                                          (if (eql (third exp) '*)
                                              ''*
                                              (third exp))))))))
+       (alpha
+        `(make-instance 'or-generator
+                        :sub-generators (list ,(expand-generator '(character 65 91))
+                                              ,(expand-generator '(character 97 123)))))
+       (alphanumeric
+        `(make-instance 'or-generator
+                        :sub-generators (list ,(expand-generator '(alpha))
+                                              ,(expand-generator '(character 48 58)))))
        (list
         `(make-instance 'list-generator :sub-generator ,(expand-generator (second exp))))
        (tuple
@@ -449,14 +457,7 @@
                                  `(progn ,@(list ,@body))))
                       (,gen-form)))))))))
 
-(defgenerator alpha ()
-  `(generator (or (character 65 91)
-                  (character 97 123))))
-
-(defgenerator alphanumeric ()
-  `(generator (or (alpha)
-                  (character 48 58))))
-
+#+nil
 (defgenerator str ()
   `(let ((char-list (generate (generator (list (alphanumeric))))))
      (generator (reduce (lambda (result current)

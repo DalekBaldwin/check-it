@@ -68,7 +68,7 @@
                        (char-code (generate generator))
                        (or (and (eq '* (second params)) 127) (second params))))))))
 
-(deftest test-alpha-generate ()
+(deftest test-alphanumeric-generate ()
   (loop for generator in (list (generator (alpha))
                                (generator (alphanumeric)))
      do
