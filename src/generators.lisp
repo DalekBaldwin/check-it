@@ -83,6 +83,22 @@
     :initarg :sub-generator
     :accessor sub-generator)))
 
+(defclass string-generator (list-generator) ())
+
+(defmethod initialize-instance ((generator string-generator) &rest initargs)
+  (declare (ignore initargs))
+  (setf (sub-generator generator)
+        (make-instance 'or-generator
+                       :sub-generators (list (make-instance 'char-generator
+                                                            :lower-limit 65
+                                                            :upper-limit 91)
+                                             (make-instance 'char-generator
+                                                            :lower-limit 97
+                                                            :upper-limit 123)
+                                             (make-instance 'char-generator
+                                                            :lower-limit 48
+                                                            :upper-limit 58)))))
+
 (defclass tuple-generator (generator)
   ((sub-generators
     :initarg :sub-generators
@@ -142,6 +158,13 @@
      collect
        (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
          (generate (sub-generator generator)))))
+
+(defmethod generate ((generator string-generator))
+  (let ((chars (call-next-method)))
+    (reduce (lambda (str sub-str)
+              (concatenate 'string str (princ-to-string sub-str)))
+            (rest chars)
+            :initial-value (princ-to-string (first chars)))))
 
 (defmethod generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))
@@ -392,6 +415,8 @@
                                               ,(expand-generator '(character 48 58)))))
        (list
         `(make-instance 'list-generator :sub-generator ,(expand-generator (second exp))))
+       (string
+        `(make-instance 'string-genrator))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
