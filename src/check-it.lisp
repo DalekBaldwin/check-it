@@ -9,8 +9,21 @@
 
 (defparameter *check-it-output* *standard-output*)
 
+(defparameter *package-regression-files* (make-hash-table))
+
+(defun register-package-regression-file (package regression-file)
+  (setf (gethash
+         (find-package package)
+         *package-regression-files*)
+        regression-file))
+
 (defun check-it% (test-form generator test
-                  &key (random-state t) regression-id regression-file)
+                  &key (random-state t)
+                    (regression-id nil regression-id-supplied)
+                    (regression-file (when regression-id-supplied
+                                       (gethash
+                                        (symbol-package regression-id)
+                                        *package-regression-files*))))
   (block trial-run
     (when regression-id
       (loop for regression-case in (get regression-id 'regression-cases)

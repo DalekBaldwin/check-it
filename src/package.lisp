@@ -38,6 +38,7 @@
            #:defgenerator
            
            #:*check-it-output*
+           #:register-package-regression-file
            #:regression-case
            #:check-it))
 
