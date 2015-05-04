@@ -1,5 +1,9 @@
 (in-package :check-it-test)
 
+(register-package-regression-file
+ :check-it-test
+ (merge-pathnames "test/regression-cases.lisp" *system-directory*))
+
 (in-root-suite)
 
 (defsuite* randomized-tests)
@@ -69,7 +73,6 @@
 
 (deftest test-struct-generate-shrink ()
   (let ((generator (generator (struct a-struct
-                                      #+(or abcl allegro) make-a-struct
                                       :a-slot (integer)
                                       :another-slot (integer))))
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
@@ -157,7 +160,6 @@
 
 (deftest test-struct-generator-shrink ()
   (let ((generator (generator (struct a-struct
-                                      #+(or abcl allegro) make-a-struct
                                       :a-slot (guard #'greater-than-5 (integer))
                                       :another-slot (guard #'greater-than-5 (integer))))))
     (loop for i from 1 to 10

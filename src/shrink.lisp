@@ -219,15 +219,14 @@ that of the alternative that was originally tried."
 
 (defmethod shrink ((value struct-generator) test)
   (with-obvious-accessors (cached-value
-                           #-(or abcl allegro) struct-type
-                           #+(or abcl allegro) constructor
+                           struct-type
                            slot-names
                            slot-generators) value
     (let ((struct
            #-(or abcl allegro)
            (make-instance struct-type)
            #+(or abcl allegro)
-           (funcall constructor)))
+           (make-struct-from-type struct-type)))
       (loop for name in slot-names
          for gen in slot-generators
          do
