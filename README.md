@@ -100,12 +100,6 @@ You can create a generator type spec that looks like:
 (struct a-struct :a-slot (integer) :another-slot (real))
 ```
 
-On ABCL and Allegro CL I haven't found a way to construct a struct given its type name, so on these implementations you must pass the name of a constructor function as the second argument to the type spec:
-
-```lisp
-(struct a-struct make-a-struct :a-slot (integer) :another-slot (real))
-```
-
 Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures within your test code. But for more complicated specifications, you need...
 
 ### User-Defined Generators
