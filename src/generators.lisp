@@ -85,7 +85,7 @@
 
 (defclass string-generator (list-generator) ())
 
-(defmethod initialize-instance ((generator string-generator) &rest initargs)
+(defmethod initialize-instance :after ((generator string-generator) &rest initargs)
   (declare (ignore initargs))
   (setf (sub-generator generator)
         (make-instance 'or-generator
@@ -481,11 +481,3 @@
                     (macrolet ((,gen-form ()
                                  `(progn ,@(list ,@body))))
                       (,gen-form)))))))))
-
-#+nil
-(defgenerator str ()
-  `(let ((char-list (generate (generator (list (alphanumeric))))))
-     (generator (reduce (lambda (result current)
-                          (concatenate 'string result (princ-to-string current)))
-                        (rest char-list)
-                        :initial-value (princ-to-string (first char-list))))))
