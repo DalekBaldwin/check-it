@@ -416,7 +416,7 @@
        (list
         `(make-instance 'list-generator :sub-generator ,(expand-generator (second exp))))
        (string
-        `(make-instance 'string-genrator))
+        `(make-instance 'string-generator))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
