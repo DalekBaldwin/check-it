@@ -18,6 +18,7 @@
            #:real-generator
            #:char-generator
            #:list-generator
+           #:string-generator
            #:tuple-generator
            #:or-generator
            #:guard-generator
@@ -26,10 +27,6 @@
 
            #:tuple
            #:struct
-
-           #:alpha
-           #:alphanumeric
-           #:string
 
            #:cached-value
            #:cached-generator
