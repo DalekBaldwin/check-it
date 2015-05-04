@@ -168,7 +168,7 @@ Use the `check-it` macro to perform a test run. Here's another useless example:
             (lambda (x) (integerp x))))
 ```
 
-This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's composite type spec, and print a failure description to `*standard-output*`.
+This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's composite type spec, and print a failure description to `*check-it-output*`.
 
 `check-it` itself returns `t` if every trial passed and `nil` if one failed, so you can embed `check-it` forms within whatever test framework you're already using. Here's what a check-it test might look like using Stefil:
 
