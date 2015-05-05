@@ -103,7 +103,7 @@ You can create a generator type spec that looks like:
 (struct a-struct :a-slot (integer) :another-slot (real))
 ```
 
-Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures within your test code. But for more complicated specifications, you need...
+In order to use this kind of generator, the struct type must have a default constructor function. Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures at the start of your test body. But for more complicated specifications, you need...
 
 ### User-Defined Generators
 
