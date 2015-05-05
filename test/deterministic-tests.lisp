@@ -60,3 +60,13 @@
                  (slot-value temp-struct 'another-slot) j)
            (is (equalp (shrink temp-struct #'struct-tester)
                        test-struct))))))
+
+(deftest test-read-struct ()
+  (let ((test-struct
+         #-(or abcl allegro)
+         (make-instance 'a-struct)
+         #+(or abcl allegro)
+         (check-it::make-struct-from-type 'a-struct)))
+    (is (equalp
+         (eval (read "#S(A-STRUCT)"))
+         test-struct))))
