@@ -113,9 +113,7 @@
 
 (defmethod shrink ((value string-generator) test)
   (let ((shrunken (shrink-list (cached-str-list value) test)))
-    (if (= 0 (length shrunken))
-        "\"\" (empty string)"
-        (join-list shrunken))))
+    (setf (cached-value value) (join-list shrunken))))
 
 (defmethod shrink ((value int-generator) test)
   (with-obvious-accessors (cached-value shrinker-predicate) value
