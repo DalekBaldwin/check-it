@@ -24,6 +24,6 @@
 (defun greater-than-5 (num)
   (> (abs num) 5))
 
-(defstruct a-struct
+(defstruct (a-struct (:constructor nil))
   a-slot
   another-slot)
