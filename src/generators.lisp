@@ -83,7 +83,9 @@
     :initarg :sub-generator
     :accessor sub-generator)))
 
-(defclass string-generator (list-generator) ())
+(defclass string-generator (list-generator)
+  ((cached-str-list
+    :accessor cached-str-list)))
 
 (defmethod initialize-instance :after ((generator string-generator) &rest initargs)
   (declare (ignore initargs))
@@ -161,10 +163,8 @@
 
 (defmethod generate ((generator string-generator))
   (let ((chars (call-next-method)))
-    (reduce (lambda (str sub-str)
-              (concatenate 'string str (princ-to-string sub-str)))
-            (rest chars)
-            :initial-value (princ-to-string (first chars)))))
+    (setf (cached-str-list generator) chars)
+    (join-list chars)))
 
 (defmethod generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))

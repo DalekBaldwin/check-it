@@ -178,6 +178,16 @@
            (is (and (= (length (cached-value generator)) 6)
                     (every (lambda (x) (= (abs x) 6)) (cached-value generator))))))))
 
+(deftest test-string-generator-shrink ()
+  (let ((generator (generator (guard (lambda (s) (> (length s) 5))
+                                     (string)))))
+    (loop for i from 1 to 10
+       do
+         (progn
+           (generate generator)
+           (shrink generator (lambda (s) (> 5 (length s))))
+           (is (= (length (cached-value generator)) 6))))))
+
 (deftest test-struct-generator-shrink ()
   (let ((generator (generator (struct a-struct
                                       :a-slot (guard #'greater-than-5 (integer))
