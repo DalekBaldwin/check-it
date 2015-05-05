@@ -68,5 +68,5 @@
          #+(or abcl allegro)
          (check-it::make-struct-from-type 'a-struct)))
     (is (equalp
-         (eval (read "#S(A-STRUCT)"))
+         (eval (read-from-string "#S(A-STRUCT)"))
          test-struct))))
