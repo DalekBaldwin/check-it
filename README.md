@@ -40,6 +40,9 @@ The `integer` generator accepts the same syntax as the standard compound type sp
 
 ;; generates integers less than or equal to 10
 (integer * 10)
+
+;; generates integers between -3 and 4
+(integer -3 4)
 ```
 
 The `real` generator works similarly.
