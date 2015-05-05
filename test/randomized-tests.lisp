@@ -75,7 +75,13 @@
   (let ((generator (generator (struct a-struct
                                       :a-slot (integer)
                                       :another-slot (integer))))
-        (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
+        (test-struct
+         #-(or abcl allegro)
+         (make-instance 'a-struct)
+         #+(or abcl allegro)
+         (check-it::make-struct-from-type 'a-struct)))
+    (setf (slot-value test-struct 'a-slot) 0
+          (slot-value test-struct 'another-slot) 0)
     (loop for i from 1 to 10
        do
          (is (equalp (shrink (generate generator) (constantly nil))
