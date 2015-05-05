@@ -57,6 +57,6 @@
                 #+(or abcl allegro)
                 (check-it::make-struct-from-type 'a-struct)))
            (setf (slot-value test-struct 'a-slot) i
-                 (slot-value test-struct 'another-slot) j))
-         (is (equalp (shrink temp-struct #'struct-tester)
-                     test-struct)))))
+                 (slot-value test-struct 'another-slot) j)
+           (is (equalp (shrink temp-struct #'struct-tester)
+                       test-struct))))))
