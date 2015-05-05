@@ -51,8 +51,12 @@
     (loop for i in (list 5 20 100 300)
        for j in (list 5 20 100 300)
        do
-         (is (equalp (shrink (make-a-struct
-                              :a-slot i
-                              :another-slot j)
-                             #'struct-tester)
+         (let ((temp-struct
+                #-(or abcl allegro)
+                (make-instance 'a-struct)
+                #+(or abcl allegro)
+                (check-it::make-struct-from-type 'a-struct)))
+           (setf (slot-value test-struct 'a-slot) i
+                 (slot-value test-struct 'another-slot) j))
+         (is (equalp (shrink temp-struct #'struct-tester)
                      test-struct)))))
