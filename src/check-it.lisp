@@ -4,7 +4,7 @@
   `(push
     ;; Some external representations can't be dumped to FASL files, so for now
     ;; it's simplest to delay loading serialized forms until runtime
-    (eval (read-from-string ,datum))
+    (read-from-string ,datum)
     (get ',name 'regression-cases)))
 
 (defparameter *check-it-output* *standard-output*)

@@ -197,7 +197,7 @@ This will (most likely) discover a failing case, shrink it, and append the follo
 (REGRESSION-CASE SOME-TEST-WITH-REGRESSION-CASES "#S(A-STRUCT :A-SLOT 1 :ANOTHER-SLOT 0)")
 ```
 
-Regression cases must be given a `regression-id` to know which `check-it` form they apply to. It's probably simplest just to tag them with the same symbol you used to name the test. (This makes your test code a little more redundant, but it keeps check-it simple and framework-agnostic.) Although generators are meant to generate data with readable print representations, some objects (like structs) cannot be dumped into FASL files, so regression cases are encoded as strings which are `eval`-ed after the file is loaded in order to delay their construction.
+Regression cases must be given a `regression-id` to know which `check-it` form they apply to. It's probably simplest just to tag them with the same symbol you used to name the test. (This makes your test code a little more redundant, but it keeps check-it simple and framework-agnostic.) Although generators are meant to generate data with readable print representations, some objects (like structs) cannot be dumped into FASL files, so regression cases are encoded as strings which are read after the file is loaded in order to delay their construction.
 
 It is recommended that you output your regression cases to a special file that initially contains only the line `(in-package :same-package-as-test-package)` and is loaded as part of the same system as your tests. Then the next time you run a check-it test, all the regression cases will be checked before any random cases are generated, which should hopefully light a fire under your ass to fix bugs you've already discovered before you hunt for new ones.
 
