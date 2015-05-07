@@ -30,7 +30,7 @@
          do
            (let ((passed (funcall test regression-case)))
              (unless passed
-               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A"
+               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
                        test-form
                        regression-id
                        regression-case)
