@@ -294,4 +294,8 @@ A `list` generator shrinks by repeatedly removing elements from the list and/or 
 
 An `or` generator shrinks by shrinking the one generator among its alternatives that was involved in generating the failed value. However, if this generator's value cannot be shrunk further, and other alternatives available to the `or` generator specify constant values, then one of those constant values may be substituted instead. So if the generator `(or (integer 5) :a-keyword)` failed after generating 5 from the `integer` subgenerator, check-it will attempt to use `:a-keyword`. This opens up more possible shrinkage paths in the overall space defined by the `or` generator's parent generators.
 
-Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec. For mapped generators, the subgenerator is shrunk and its result is tested with the mapping reapplied. For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
+Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec.
+
+For mapped generators, the subgenerator shrinks according to its own internal degrees of freedom, but the mapping is applied to each candidate for the subgenerator's shrunken values to determine whether entire composite data structure still fails the test. There's a bit of a thorny issue here in that check-it doesn't know for sure whether a simpler value in the subgenerator will really correspond to a simpler value after the mapping is applied. For this reason, good mapping functions should typically be injective.
+
+For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
