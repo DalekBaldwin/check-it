@@ -56,6 +56,9 @@ The `character` generator accepts a syntax much like the number generators. It a
 
 ```lisp
 ;; any character
+(character)
+
+;; any character, again
 (character * *)
 
 (character #\a #\f)
