@@ -9,7 +9,7 @@
     :reader name)
    (datum
     :initarg :datum
-    :reader timestamp)
+    :reader datum)
    (timestamp
     :initarg :timestamp
     :reader timestamp)))
