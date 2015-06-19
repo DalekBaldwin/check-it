@@ -78,6 +78,10 @@
   (declare (ignore initargs))
   (with-obvious-accessors
       (lower-limit upper-limit generator-function) instance
+    (when (characterp lower-limit)
+      (setf lower-limit (char-code lower-limit)))
+    (when (characterp upper-limit)
+      (setf upper-limit (char-code upper-limit)))
     (setf generator-function (char-generator-function lower-limit upper-limit))))
 
 (defclass list-generator (generator)
@@ -283,23 +287,24 @@
              (new-low (* (min (abs high) *size*) (signum low))))
          (+ (random (float (- new-high new-low))) new-low))))))
 
-(defun char-generator-function (low high)
-  (match (cons low high)
-    ((cons '* '*)
-     (lambda () (code-char (random 128))))
-    ((cons '* _)
-     (lambda ()
-       (let ((new-high (min high 128)))
-             (code-char (random new-high)))))
-    ((cons _ '*)
-     (lambda ()
-       (let ((new-low (max low 0)))
-         (code-char (+ (random (- 128 new-low)) new-low)))))
-    (_
-     (lambda ()
-       (let ((new-high (min high 128))
-             (new-low (max low 0)))
-         (code-char (+ (random (- new-high new-low)) new-low)))))))
+(let ((top-char 127))
+  (defun char-generator-function (low high)
+    (match (cons low high)
+      ((cons '* '*)
+       (lambda () (code-char (random (1+ top-char)))))
+      ((cons '* _)
+       (lambda ()
+         (let ((new-high (min high top-char)))
+           (code-char (random (1+ new-high))))))
+      ((cons _ '*)
+       (lambda ()
+         (let ((new-low (max low 0)))
+           (code-char (+ (random (- (1+ top-char) new-low)) new-low)))))
+      (_
+       (lambda ()
+         (let ((new-high (min high 128))
+               (new-low (max low 0)))
+           (code-char (+ (random (1+ (- new-high new-low))) new-low))))))))
 
 (defun int-shrinker-predicate (low high)
   (match (cons low high)
@@ -405,51 +410,57 @@
         `(make-instance 'bool-generator))
        (integer
         `(make-instance 'int-generator
-                        ,@(when (second exp)
-                                (append
-                                 (list :lower-limit
-                                       (if (eql (second exp) '*)
-                                           ''*
-                                           (second exp)))
-                                 (when (third exp)
-                                   (list :upper-limit
-                                         (if (eql (third exp) '*)
-                                             ''*
-                                             (third exp))))))))
+                        ,@(let ((lower (second exp)))
+                               (when lower
+                                 (append
+                                  (list :lower-limit
+                                        (if (eql lower '*)
+                                            ''*
+                                            lower))
+                                  (let ((upper (third exp)))
+                                    (when upper
+                                      (list :upper-limit
+                                            (if (eql upper '*)
+                                                ''*
+                                                upper)))))))))
        (real
         `(make-instance 'real-generator
-                        ,@(when (second exp)
-                                (append
-                                 (list :lower-limit
-                                       (if (eql (second exp) '*)
-                                           ''*
-                                           (second exp)))
-                                 (when (third exp)
-                                   (list :upper-limit
-                                         (if (eql (third exp) '*)
-                                             ''*
-                                             (third exp))))))))
+                        ,@(let ((lower (second exp)))
+                               (when lower
+                                 (append
+                                  (list :lower-limit
+                                        (if (eql lower '*)
+                                            ''*
+                                            lower))
+                                  (let ((upper (third exp)))
+                                    (when upper
+                                      (list :upper-limit
+                                            (if (eql upper '*)
+                                                ''*
+                                                upper)))))))))
        (character
         `(make-instance 'char-generator
-                        ,@(when (second exp)
-                                (append
-                                 (list :lower-limit
-                                       (if (eql (second exp) '*)
-                                           ''*
-                                           (second exp)))
-                                 (when (third exp)
-                                   (list :upper-limit
-                                         (if (eql (third exp) '*)
-                                             ''*
-                                             (third exp))))))))
+                        ,@(let ((lower (second exp)))
+                               (when lower
+                                 (append
+                                  (list :lower-limit
+                                        (if (eql lower '*)
+                                            ''*
+                                            lower))
+                                  (let ((upper (third exp)))
+                                    (when upper
+                                      (list :upper-limit
+                                            (if (eql upper '*)
+                                                ''*
+                                              upper)))))))))
        (alpha
         `(make-instance 'or-generator
-                        :sub-generators (list ,(expand-generator '(character 65 91))
-                                              ,(expand-generator '(character 97 123)))))
+                        :sub-generators (list ,(expand-generator '(character 65 90))
+                                              ,(expand-generator '(character 97 122)))))
        (alphanumeric
         `(make-instance 'or-generator
                         :sub-generators (list ,(expand-generator '(alpha))
-                                              ,(expand-generator '(character 48 58)))))
+                                              ,(expand-generator '(character 48 57)))))
        (list
         (when (null (second exp))
           (error "LIST generator requires a subgenerator"))
@@ -497,20 +508,20 @@
                      (list ,@(loop for slot in sorted-slots
                                 collect (expand-generator (second slot))))))))))
        (chain
-        (destructuring-bind (params &rest body) (rest exp)
-          (let ((binding-vars
-                 (loop for param in params
-                      collect (cond
-                                ((listp param) (first param))
-                                (t param))))
-                (binding-gens
-                 (loop for param in params
-                      collect (cond
-                                ((listp param) (expand-generator (second param)))
-                                (t param)))))
-            `(make-instance 'chained-generator
-                            :pre-generators (list ,@binding-gens)
-                            :generator-function (lambda ,binding-vars ,@body)))))
+           (destructuring-bind (params &rest body) (rest exp)
+             (let ((binding-vars
+                    (loop for param in params
+                       collect (cond
+                                 ((listp param) (first param))
+                                 (t param))))
+                   (binding-gens
+                    (loop for param in params
+                       collect (cond
+                                 ((listp param) (expand-generator (second param)))
+                                 (t param)))))
+               `(make-instance 'chained-generator
+                               :pre-generators (list ,@binding-gens)
+                               :generator-function (lambda ,binding-vars ,@body)))))
        (otherwise
         (cond
           ((get (first exp) 'generator)
