@@ -59,6 +59,26 @@
               do
                 (is (<= (- *size*) (generate generator) *size*)))))))
 
+(deftest test-char-generate ()
+  (loop for params in '((* *) (* 25) (25 *) (25 26))
+     do (let ((generator (generator (character (first params) (second params)))))
+          (loop for i from 1 to 100
+             do
+               (is (<= (or (and (eq '* (first params)) 0) (first params))
+                       (char-code (generate generator))
+                       (or (and (eq '* (second params)) 127) (second params))))))))
+
+(deftest test-alphanumeric-generate ()
+  (loop for generator in (list (generator (alpha))
+                               (generator (alphanumeric)))
+     do
+       (loop for i from 1 to 100
+        do
+          (let ((random-char (generate generator)))
+            (is (or (<= 48 (char-code random-char) 57)
+                    (<= 65 (char-code random-char) 90)
+                    (<= 97 (char-code random-char) 122)))))))
+
 ;;;; Shrink results of generators
 
 (deftest test-int-generate-shrink ()
@@ -181,6 +201,16 @@
            (shrink generator #'list-tester)
            (is (and (= (length (cached-value generator)) 6)
                     (every (lambda (x) (= (abs x) 6)) (cached-value generator))))))))
+
+(deftest test-string-generator-shrink ()
+  (let ((generator (generator (guard (lambda (s) (> (length s) 5))
+                                     (string)))))
+    (loop for i from 1 to 10
+       do
+         (progn
+           (generate generator)
+           (shrink generator (lambda (s) (> 5 (length s))))
+           (is (= (length (cached-value generator)) 6))))))
 
 (deftest test-struct-generator-shrink ()
   (let ((generator (generator (struct a-struct

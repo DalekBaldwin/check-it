@@ -46,7 +46,7 @@ The `integer` generator accepts the same syntax as the standard compound type sp
 (integer -3 4)
 ```
 
-The `real` generator works similarly.
+The `real` and `character` generators works similarly. The `character` generator specializes in two additional generators. `alpha` to generate alphabetical characters and `alphanumeric` to generate alphanumerical characters.
 
 In addition to the constraints you choose in the type specifier, the absolute values of generated numbers are also bounded by the parameter `*size*`.
 
@@ -74,6 +74,12 @@ The `tuple` generator generates a list containing one result from each of its su
        (generator (tuple (integer) (real)))))
   (generate another-generator))
 ;; sample result: (-6 -4.168296)
+```
+A special form of the `list` generator (equally length bounded by `*list-size*`) is the `str` generator to generate strings consisting of randomly chosen alphanumeric characters.
+
+```lisp
+(generate (generator (str)))
+;; sample output: "2k464h72CZ4TE1KQ"
 ```
 
 ### Or Generator
@@ -221,7 +227,7 @@ You can configure the `check-it` macro to automatically add new deterministic re
 
 ```lisp
 (deftest some-test-with-regression-cases ()
-  (is 
+  (is
    (check-it (generator (struct a-struct
                                 :a-slot (integer)
                                 :another-slot (integer)))

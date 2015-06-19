@@ -61,6 +61,25 @@
       (lower-limit upper-limit generator-function) instance
       (setf generator-function (real-generator-function lower-limit upper-limit))))
 
+(defclass char-generator (simple-generator)
+  ((lower-limit
+    :initarg :lower-limit
+    :accessor lower-limit
+    :initform '*)
+   (upper-limit
+    :initarg :upper-limit
+    :accessor upper-limit
+    :initform '*)
+   (generator-function
+    :accessor generator-function)))
+
+(defmethod initialize-instance
+    :after ((instance char-generator) &rest initargs)
+  (declare (ignore initargs))
+  (with-obvious-accessors
+      (lower-limit upper-limit generator-function) instance
+    (setf generator-function (char-generator-function lower-limit upper-limit))))
+
 (defclass list-generator (generator)
   ((sub-generator
     :initarg :sub-generator
@@ -73,6 +92,24 @@
     :initarg :max-length
     :accessor max-length
     :initform (1- most-positive-fixnum))))
+
+(defclass string-generator (list-generator)
+  ((cached-str-list
+    :accessor cached-str-list)))
+
+(defmethod initialize-instance :after ((generator string-generator) &rest initargs)
+  (declare (ignore initargs))
+  (setf (sub-generator generator)
+        (make-instance 'or-generator
+                       :sub-generators (list (make-instance 'char-generator
+                                                            :lower-limit 65
+                                                            :upper-limit 91)
+                                             (make-instance 'char-generator
+                                                            :lower-limit 97
+                                                            :upper-limit 123)
+                                             (make-instance 'char-generator
+                                                            :lower-limit 48
+                                                            :upper-limit 58)))))
 
 (defclass tuple-generator (generator)
   ((sub-generators
@@ -148,6 +185,11 @@
          collect
            (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
              (generate sub-generator))))))
+
+(defmethod generate ((generator string-generator))
+  (let ((chars (call-next-method)))
+    (setf (cached-str-list generator) chars)
+    (join-list chars)))
 
 (defmethod generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))
@@ -241,6 +283,24 @@
              (new-low (* (min (abs high) *size*) (signum low))))
          (+ (random (float (- new-high new-low))) new-low))))))
 
+(defun char-generator-function (low high)
+  (match (cons low high)
+    ((cons '* '*)
+     (lambda () (code-char (random 128))))
+    ((cons '* _)
+     (lambda ()
+       (let ((new-high (min high 128)))
+             (code-char (random new-high)))))
+    ((cons _ '*)
+     (lambda ()
+       (let ((new-low (max low 0)))
+         (code-char (+ (random (- 128 new-low)) new-low)))))
+    (_
+     (lambda ()
+       (let ((new-high (min high 128))
+             (new-low (max low 0)))
+         (code-char (+ (random (- new-high new-low)) new-low)))))))
+
 (defun int-shrinker-predicate (low high)
   (match (cons low high)
     ((cons '* '*)
@@ -261,6 +321,9 @@
     (1 t)))
 
 (defmethod generate ((generator real-generator))
+  (funcall (generator-function generator)))
+
+(defmethod generate ((generator char-generator))
   (funcall (generator-function generator)))
 
 (defmethod generate ((generator guard-generator))
@@ -366,6 +429,27 @@
                                          (if (eql (third exp) '*)
                                              ''*
                                              (third exp))))))))
+       (character
+        `(make-instance 'char-generator
+                        ,@(when (second exp)
+                                (append
+                                 (list :lower-limit
+                                       (if (eql (second exp) '*)
+                                           ''*
+                                           (second exp)))
+                                 (when (third exp)
+                                   (list :upper-limit
+                                         (if (eql (third exp) '*)
+                                             ''*
+                                             (third exp))))))))
+       (alpha
+        `(make-instance 'or-generator
+                        :sub-generators (list ,(expand-generator '(character 65 91))
+                                              ,(expand-generator '(character 97 123)))))
+       (alphanumeric
+        `(make-instance 'or-generator
+                        :sub-generators (list ,(expand-generator '(alpha))
+                                              ,(expand-generator '(character 48 58)))))
        (list
         (when (null (second exp))
           (error "LIST generator requires a subgenerator"))
@@ -373,6 +457,8 @@
           `(make-instance 'list-generator
                           :sub-generator ,(expand-generator sub-generator)
                           ,@keys)))
+       (string
+        `(make-instance 'string-generator))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
