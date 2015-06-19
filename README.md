@@ -65,6 +65,7 @@ You can also specify length bounds with `:min-length` and `:max-length`. `:max-l
 
 ```lisp
 (generator (list (integer) :min-length 5 :max-length 10))
+```
 
 The `tuple` generator generates a list containing one result from each of its subgenerators in order, so unlike the `list` generator, its length is fixed:
 
@@ -116,7 +117,7 @@ In order to use this kind of generator, the struct type must have a default cons
 You can create generators whose behavior is parameterized by other generators with `chain`. Every time a value is created from a chained generator,
 
 1. Each parameterizing generator generates a new value,
-2. Those values are bound it to the associated variable names in the body of the `chain` form,
+2. Those values are bound to the associated variable names in the body of the `chain` form,
 3. The body is evaluated to construct a new parameterized generator, and
 4. The parameterized generator generates the end value.
 
