@@ -106,14 +106,20 @@
   (setf (sub-generator generator)
         (make-instance 'or-generator
                        :sub-generators (list (make-instance 'char-generator
-                                                            :lower-limit 65
-                                                            :upper-limit 91)
+                                                            :lower-limit
+                                                            #.(char-code #\A)
+                                                            :upper-limit
+                                                            #.(char-code #\Z))
                                              (make-instance 'char-generator
-                                                            :lower-limit 97
-                                                            :upper-limit 123)
+                                                            :lower-limit
+                                                            #.(char-code #\a)
+                                                            :upper-limit
+                                                            #.(char-code #\z))
                                              (make-instance 'char-generator
-                                                            :lower-limit 48
-                                                            :upper-limit 58)))))
+                                                            :lower-limit
+                                                            #.(char-code #\0)
+                                                            :upper-limit
+                                                            #.(char-code #\9))))))
 
 (defclass tuple-generator (generator)
   ((sub-generators
@@ -455,12 +461,20 @@
                                               upper)))))))))
        (alpha
         `(make-instance 'or-generator
-                        :sub-generators (list ,(expand-generator '(character 65 90))
-                                              ,(expand-generator '(character 97 122)))))
+                        :sub-generators
+                        (list ,(expand-generator '(character
+                                                   #.(char-code #\A)
+                                                   #.(char-code #\Z)))
+                              ,(expand-generator '(character
+                                                   #.(char-code #\a)
+                                                   #.(char-code #\z))))))
        (alphanumeric
         `(make-instance 'or-generator
-                        :sub-generators (list ,(expand-generator '(alpha))
-                                              ,(expand-generator '(character 48 57)))))
+                        :sub-generators
+                        (list ,(expand-generator '(alpha))
+                              ,(expand-generator '(character
+                                                   #.(char-code #\0)
+                                                   #.(char-code #\9))))))
        (list
         (when (null (second exp))
           (error "LIST generator requires a subgenerator"))
