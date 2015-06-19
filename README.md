@@ -12,6 +12,7 @@ This is a randomized property-based testing library for Common Lisp. Rather than
     * [Or Generator](#or-generator)
     * [Guard Generator](#guard-generator)
     * [Struct Generator](#struct-generator)
+    * [Mapped Generators](#mapped-generators)
     * [Chained Generators](#chained-generators)
     * [User-Defined Generators](#user-defined-generators)
   * [Checking](#checking)
@@ -137,7 +138,18 @@ You can create a generator type spec that looks like:
 (struct a-struct :a-slot (integer) :another-slot (real))
 ```
 
-In order to use this kind of generator, the struct type must have a default constructor function. Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures at the start of your test body. But for more complicated specifications, you need...
+In order to use this kind of generator, the struct type must have a default constructor function. Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures at the start of your test body. However, for complex, nested generator forms, it may be difficult or impossible to unambiguously specify where to find the output of some deep sub-sub-generator that you wish to transform. For more those situations, you need...
+
+### Mapped Generators
+
+A mapped generator applies a transformation to their subgenerator. The transformation function should not mutate its argument.
+
+```lisp
+(let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
+                           (map (lambda (x) (list x x)) (integer 3 20))))))
+  (generate g))
+;;; sample result: ((8 8 8) (4 4))
+```
 
 ### Chained Generators
 
@@ -282,4 +294,4 @@ A `list` generator shrinks by repeatedly removing elements from the list and/or 
 
 An `or` generator shrinks by shrinking the one generator among its alternatives that was involved in generating the failed value. However, if this generator's value cannot be shrunk further, and other alternatives available to the `or` generator specify constant values, then one of those constant values may be substituted instead. So if the generator `(or (integer 5) :a-keyword)` failed after generating 5 from the `integer` subgenerator, check-it will attempt to use `:a-keyword`. This opens up more possible shrinkage paths in the overall space defined by the `or` generator's parent generators.
 
-Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec. For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
+Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec. For mapped generators, the subgenerator is shrunk and its result is tested with the mapping reapplied. For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
