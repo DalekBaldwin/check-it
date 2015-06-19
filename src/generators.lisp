@@ -156,6 +156,14 @@
     :initarg :slot-generators
     :accessor slot-generators)))
 
+(defclass mapped-generator (generator)
+  ((sub-generator
+    :initarg :sub-generator
+    :accessor sub-generator)
+   (mapping
+    :initarg :mapping
+    :accessor mapping)))
+
 (defclass chained-generator (generator)
   ((pre-generators
     :initarg :pre-generators
@@ -376,6 +384,10 @@
                 (generate gen)))
     struct))
 
+(defmethod generate ((generator mapped-generator))
+  (with-obvious-accessors (sub-generator mapping) generator
+    (funcall mapping (generate sub-generator))))
+
 (defmethod generate ((generator chained-generator))
   (with-obvious-accessors (pre-generators generator-function cached-generator) generator
     (setf cached-generator (apply generator-function (mapcar #'generate pre-generators)))
@@ -458,7 +470,7 @@
                                       (list :upper-limit
                                             (if (eql upper '*)
                                                 ''*
-                                              upper)))))))))
+                                                upper)))))))))
        (alpha
         `(make-instance 'or-generator
                         :sub-generators
@@ -521,6 +533,10 @@
                      :slot-generators
                      (list ,@(loop for slot in sorted-slots
                                 collect (expand-generator (second slot))))))))))
+       (map
+        `(make-instance 'mapped-generator
+                        :mapping ,(second exp)
+                        :sub-generator ,(expand-generator (third exp))))
        (chain
            (destructuring-bind (params &rest body) (rest exp)
              (let ((binding-vars

@@ -22,6 +22,7 @@
            #:tuple-generator
            #:or-generator
            #:guard-generator
+           #:mapped-generator
            #:chained-generator
            #:object-generator
            #:generate

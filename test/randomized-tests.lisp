@@ -287,3 +287,12 @@
     (is (check-it g
                   (lambda (x) (<= 10 (length x) 20))
                   :examples (list (iota 10) (iota 20))))))
+
+(deftest test-mapped-generator-shrink ()
+  (let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
+                             (map (lambda (x) (list x x)) (integer 3 20))))))
+    (loop for i from 1 to 10
+         do
+         (progn
+           (generate g)
+           (is (equal (shrink g (constantly nil)) '((3 3 3) (3 3))))))))

@@ -258,6 +258,15 @@ that of the alternative that was originally tried."
                          (not (funcall guard x)))))))
       (setf cached-value result))))
 
+(defmethod shrink ((value mapped-generator) test)
+  (with-obvious-accessors (cached-value sub-generator mapping) value
+    (let ((result
+           (funcall mapping
+                    (shrink sub-generator
+                            (lambda (x)
+                              (funcall (compose test mapping) x))))))
+      (setf cached-value result))))
+
 (defmethod shrink ((value chained-generator) test)
   (with-obvious-accessors (cached-value cached-generator) value
     (let ((result
