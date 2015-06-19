@@ -138,7 +138,7 @@ You can create a generator type spec that looks like:
 (struct a-struct :a-slot (integer) :another-slot (real))
 ```
 
-In order to use this kind of generator, the struct type must have a default constructor function. Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures at the start of your test body. However, for complex, nested generator forms, it may be difficult or impossible to unambiguously specify where to find the output of some deep sub-sub-generator that you wish to transform. For more those situations, you need...
+In order to use this kind of generator, the struct type must have a default constructor function. Of course, you can always use simple generators to specify all the atomic data elements you need and manually assemble them into more complex data structures at the start of your test body. However, for complex, nested generator forms, it may be difficult or impossible to unambiguously specify where to find the output of some deep sub-sub-generator that you wish to transform. For those situations, you need...
 
 ### Mapped Generators
 
