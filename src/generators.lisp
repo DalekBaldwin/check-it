@@ -18,6 +18,8 @@
   (:documentation
    "Abstract base class for non-compound generators. Not meant to be instantiated."))
 
+(defclass bool-generator (generator) ())
+
 (defclass int-generator (simple-generator)
   ((lower-limit
     :initarg :lower-limit
@@ -62,7 +64,15 @@
 (defclass list-generator (generator)
   ((sub-generator
     :initarg :sub-generator
-    :accessor sub-generator)))
+    :accessor sub-generator)
+   (min-length
+    :initarg :min-length
+    :accessor min-length
+    :initform 0)
+   (max-length
+    :initarg :max-length
+    :accessor max-length
+    :initform (1- most-positive-fixnum))))
 
 (defclass tuple-generator (generator)
   ((sub-generators
@@ -99,6 +109,17 @@
     :initarg :slot-generators
     :accessor slot-generators)))
 
+(defclass chained-generator (generator)
+  ((pre-generators
+    :initarg :pre-generators
+    :accessor pre-generators)
+   (generator-function
+    :initarg :generator-function
+    :accessor generator-function)
+   (cached-generator
+    :initarg :cached-generator
+    :accessor cached-generator)))
+
 (defclass custom-generator (generator)
   ((kind
     :initarg :kind
@@ -119,10 +140,14 @@
   (setf (cached-value generator) (call-next-method)))
 
 (defmethod generate ((generator list-generator))
-  (loop repeat (random *list-size*)
-     collect
-       (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
-         (generate (sub-generator generator)))))
+  (with-obvious-accessors (sub-generator min-length max-length) generator
+    (let ((rand-length
+           (+ min-length
+              (random (- (min (1+ max-length) *list-size*) min-length)))))
+      (loop repeat (max rand-length min-length)
+         collect
+           (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
+             (generate sub-generator))))))
 
 (defmethod generate ((generator tuple-generator))
   (mapcar #'generate (sub-generators generator)))
@@ -230,6 +255,11 @@
 (defmethod generate ((generator int-generator))
   (funcall (generator-function generator)))
 
+(defmethod generate ((generator bool-generator))
+  (case (random 2)
+    (0 nil)
+    (1 t)))
+
 (defmethod generate ((generator real-generator))
   (funcall (generator-function generator)))
 
@@ -272,6 +302,11 @@
                 (generate gen)))
     struct))
 
+(defmethod generate ((generator chained-generator))
+  (with-obvious-accessors (pre-generators generator-function cached-generator) generator
+    (setf cached-generator (apply generator-function (mapcar #'generate pre-generators)))
+    (generate cached-generator)))
+
 (defmethod generate ((generator custom-generator))
   (generate (sub-generator generator)))
 
@@ -303,6 +338,8 @@
      (case (first exp)
        (quote
         `',(second exp))
+       (boolean
+        `(make-instance 'bool-generator))
        (integer
         `(make-instance 'int-generator
                         ,@(when (second exp)
@@ -330,12 +367,19 @@
                                              ''*
                                              (third exp))))))))
        (list
-        `(make-instance 'list-generator :sub-generator ,(expand-generator (second exp))))
+        (when (null (second exp))
+          (error "LIST generator requires a subgenerator"))
+        (destructuring-bind (sub-generator &rest keys) (rest exp)
+          `(make-instance 'list-generator
+                          :sub-generator ,(expand-generator sub-generator)
+                          ,@keys)))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
                                                    collect (expand-generator elem)))))
        (or
+        (when (endp (rest exp))
+          (error "OR generator requires at least one subgenerator"))
         `(make-instance 'or-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
                                                    collect (expand-generator elem)))))
@@ -366,6 +410,21 @@
                      :slot-generators
                      (list ,@(loop for slot in sorted-slots
                                 collect (expand-generator (second slot))))))))))
+       (chain
+        (destructuring-bind (params &rest body) (rest exp)
+          (let ((binding-vars
+                 (loop for param in params
+                      collect (cond
+                                ((listp param) (first param))
+                                (t param))))
+                (binding-gens
+                 (loop for param in params
+                      collect (cond
+                                ((listp param) (expand-generator (second param)))
+                                (t param)))))
+            `(make-instance 'chained-generator
+                            :pre-generators (list ,@binding-gens)
+                            :generator-function (lambda ,binding-vars ,@body)))))
        (otherwise
         (cond
           ((get (first exp) 'generator)

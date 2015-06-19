@@ -1,11 +1,35 @@
 (in-package :check-it)
 
-(defmacro regression-case (name datum)
-  `(push
-    ;; Some external representations can't be dumped to FASL files, so for now
-    ;; it's simplest to delay loading serialized forms until runtime
-    (read-from-string ,datum)
-    (get ',name 'regression-cases)))
+(defmacro regression-case (&key name datum timestamp)
+  `(regression-case% ',name ,datum ,timestamp))
+
+(defclass regression-case ()
+  ((name
+    :initarg :name
+    :reader name)
+   (datum
+    :initarg :datum
+    :reader timestamp)
+   (timestamp
+    :initarg :timestamp
+    :reader timestamp)))
+
+(defun regression-case% (name datum timestamp)
+  (push
+   (make-instance 'regression-case
+                  :name name
+                  ;; Some external representations can't be dumped to FASL
+                  ;; files, so for now it's simplest to delay loading serialized
+                  ;; forms until runtime
+                  :datum (read-from-string datum)
+                  :timestamp timestamp)
+   (get name 'regression-cases)))
+
+(defun write-regression-case (name datum)
+  `(regression-case
+    :name ,name
+    :datum ,(format nil "~S" datum)
+    :timestamp ,(get-universal-time)))
 
 (defparameter *check-it-output* *standard-output*)
 
@@ -30,7 +54,7 @@
          do
            (let ((passed (funcall test regression-case)))
              (unless passed
-               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A"
+               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
                        test-form
                        regression-id
                        regression-case)
@@ -56,10 +80,7 @@
                                         :direction :output
                                         :if-exists :append
                                         :if-does-not-exist :error)
-                       (format s "~&~S~%"
-                               `(regression-case
-                                 ,regression-id
-                                 ,(format nil "~S" shrunk))))))
+                       (format s "~&~S~%" (write-regression-case regression-id shrunk)))))
                  (return-from trial-run nil))))))
     (return-from trial-run t)))
 

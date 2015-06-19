@@ -144,6 +144,30 @@
            (is (every (lambda (x) (= (abs x) 6))
                       (shrink generator #'tuple-tester)))))))
 
+(deftest test-list-generator-bounds ()
+  (let ((min-generator (generator (integer 0)))
+        (interval-generator (generator (integer 1))))
+    (loop for i from 1 to 20
+       collect
+         (progn
+           (let* ((min (generate min-generator))
+                  (interval (generate interval-generator))
+                  (list-generator
+                   (generator (list (integer)
+                                    :min-length min
+                                    :max-length (+ min interval)))))
+             (is (<= min (length (generate list-generator)) (+ min interval)))))))
+  (let ((bound-generator (generator (integer 0))))
+    (loop for i from 1 to 10
+       collect
+         (progn
+           (let* ((bound (generate bound-generator))
+                  (list-generator
+                   (generator (list (integer)
+                                    :min-length bound
+                                    :max-length bound))))
+             (is (= bound (length (generate list-generator)))))))))
+
 (deftest test-list-generator-shrink ()
   (let ((generator (generator
                     (guard (lambda (l) (> (length l) 5))
@@ -211,3 +235,22 @@
   (let ((*num-trials* 50))
     (is (check-it (generator (integer))
                   (lambda (x) (<= x *size*))))))
+
+(deftest test-chained-generator ()
+  (let ((*list-size* 100)
+        (*size* 100)
+        (generator
+         (generator
+          (chain ((x (integer 10 12))
+                  (y (integer 18 20)))
+                   (generator (list (integer) :min-length x :max-length y))))))
+    (let ((lengths
+           (loop for i from 1 to 50
+                collect (length (generate generator)))))
+      (is (<= 10 (apply #'min lengths) (apply #'max lengths) 20)))
+    (loop for i from 1 to 20
+         collect
+         (progn
+           (generate generator)
+           (is (<= 10 (length (shrink generator (lambda (x) (= (length x) 5)))) 12))))
+    (is (check-it generator (lambda (x) (<= 10 (length x) 20))))))
