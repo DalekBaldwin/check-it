@@ -151,11 +151,10 @@ You can create generators whose behavior is parameterized by other generators wi
 For example, you can generate random NxN matrices like this:
 
 ```lisp
-(let ((generator
-       (generator
-        (chain ((n (integer 1 5)))
-          (generator (list (list (integer) :min-length n :max-length n)
-                           :min-length n :max-length n))))))
+(let ((g (generator
+          (chain ((n (integer 1 5)))
+            (generator (list (list (integer) :min-length n :max-length n)
+                             :min-length n :max-length n))))))
   (generate generator))
 ;; sample result: ((-2 0 -9 -6) (6 7 -3 -7) (9 -10 10 6) (-6 -10 -10 8))
 ```
@@ -166,7 +165,7 @@ If you provide only a name for a parameterizer instead of a list containing a na
 
 ```lisp
 (let ((x (generator (integer 1 3)))
-      (y (generator (integer 8 1))))
+      (y (generator (integer 8 10))))
   (generator (chain (x y)
                (list (integer) :min-length x :max-length y))))
 ```
