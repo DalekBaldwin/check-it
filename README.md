@@ -46,9 +46,25 @@ The `integer` generator accepts the same syntax as the standard compound type sp
 (integer -3 4)
 ```
 
-The `real` and `character` generators works similarly. The `character` generator specializes in two additional generators. `alpha` to generate alphabetical characters and `alphanumeric` to generate alphanumerical characters.
+The `real` generator works similarly.
 
 In addition to the constraints you choose in the type specifier, the absolute values of generated numbers are also bounded by the parameter `*size*`.
+
+### Character Generators
+
+The `character` generator accepts a syntax much like the number generators. It accepts either characters or character codes as bounding values:
+
+```lisp
+;; any character
+(character * *)
+
+(character #\a #\f)
+
+;; same as previous
+(character 97 102)
+```
+
+Two additional character generators are predefined for common cases: `alpha` for `#\a`-`#\z` and `#\A`-`#\Z`, and `alphanumeric` for `#\a`-`#\z`, `#\A`-`#\Z`, and `#\0`-`#\9`.
 
 ### List and Tuple Generators
 
@@ -75,6 +91,7 @@ The `tuple` generator generates a list containing one result from each of its su
   (generate another-generator))
 ;; sample result: (-6 -4.168296)
 ```
+
 A special form of the `list` generator (equally length bounded by `*list-size*`) is the `str` generator to generate strings consisting of randomly chosen alphanumeric characters.
 
 ```lisp
