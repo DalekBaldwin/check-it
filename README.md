@@ -242,6 +242,8 @@ It is recommended that you output your regression cases to a special file that i
 
 Eventually, check-it will be integrated more elegantly with individual test frameworks by extending their APIs. For now, you can reduce code repetition by declaring a file to output regression cases for all `regression-id`s in a given package with `(register-package-regression-file :package file)`, so you don't have to mention the file in each test.
 
+You can also provide a list of explicit inline examples that will also be checked before any random cases are generated using the `:examples` keyword argument to `check-it`.
+
 ## Shrinking
 
 When a generated value fails a test, check-it searches for a simpler value as follows:
@@ -254,4 +256,4 @@ A `list` generator shrinks by repeatedly removing elements from the list and/or 
 
 An `or` generator shrinks by shrinking the one generator among its alternatives that was involved in generating the failed value. However, if this generator's value cannot be shrunk further, and other alternatives available to the `or` generator specify constant values, then one of those constant values may be substituted instead. So if the generator `(or (integer 5) :a-keyword)` failed after generating 5 from the `integer` subgenerator, check-it will attempt to use `:a-keyword`. This opens up more possible shrinkage paths in the overall space defined by the `or` generator's parent generators.
 
-Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec.
+Other generators shrink by recursively shrinking their subgenerators while still respecting the overall type spec. For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
