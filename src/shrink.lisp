@@ -157,7 +157,7 @@ that of the alternative that was originally tried."
   (shrink-list-generator value test))
 
 (defun shrink-list-generator (value test)
-  (with-obvious-accessors (cached-value sub-generator) value
+  (with-obvious-accessors (cached-value sub-generator min-length) value
     (flet ((elem-wise-shrink ()
              (loop for i from 0
                 for elem in cached-value
@@ -181,6 +181,8 @@ that of the alternative that was originally tried."
       (cond
         ((endp cached-value)
          ;; can't shrink nil!
+         cached-value)
+        ((= (length cached-value) min-length)
          cached-value)
         (t
          (let ((can-shrink-lengthwise
@@ -250,6 +252,12 @@ that of the alternative that was originally tried."
                    (lambda (x)
                      (or (funcall test x)
                          (not (funcall guard x)))))))
+      (setf cached-value result))))
+
+(defmethod shrink ((value chained-generator) test)
+  (with-obvious-accessors (cached-value cached-generator) value
+    (let ((result
+           (shrink cached-generator test)))
       (setf cached-value result))))
 
 (defmethod shrink ((value custom-generator) test)

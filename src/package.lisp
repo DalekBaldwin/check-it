@@ -20,11 +20,13 @@
            #:tuple-generator
            #:or-generator
            #:guard-generator
+           #:chained-generator
            #:object-generator
            #:generate
            
            #:tuple
            #:struct
+           #:chain
            
            #:cached-value
            #:cached-generator
