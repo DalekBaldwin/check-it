@@ -7,6 +7,7 @@ This is a randomized property-based testing library for Common Lisp. Rather than
 ## Table of Contents
   * [Generating](#generating)
     * [Number Generators](#number-generators)
+    * [Character Generators](#character-generators)
     * [List and Tuple Generators](#list-and-tuple-generators)
     * [Or Generator](#or-generator)
     * [Guard Generator](#guard-generator)
