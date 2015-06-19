@@ -155,7 +155,7 @@ For example, you can generate random NxN matrices like this:
           (chain ((n (integer 1 5)))
             (generator (list (list (integer) :min-length n :max-length n)
                              :min-length n :max-length n))))))
-  (generate generator))
+  (generate g))
 ;; sample result: ((-2 0 -9 -6) (6 7 -3 -7) (9 -10 10 6) (-6 -10 -10 8))
 ```
 
