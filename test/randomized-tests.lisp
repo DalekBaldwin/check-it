@@ -10,256 +10,256 @@
 
 (deftest test-generator ()
   (is (every #'identity
-       (mapcar (lambda (x y) (subtypep (type-of x) y))
-               (generate (generator (tuple (real) (integer) (list (integer)))))
-               '(single-float integer
-                 #-abcl (or cons null)
-                 #+abcl t ;; ridiculous
-                 )))))
+             (mapcar (lambda (x y) (subtypep (type-of x) y))
+                     (generate (generator (tuple (real) (integer) (list (integer)))))
+                     '(single-float integer
+                       #-abcl (or cons null)
+                       #+abcl t ;; ridiculous
+                       )))))
 
 (deftest test-int-generate ()
   (loop for size in (list 10 20 50 300)
      do
        (let ((*size* size))
-         (let ((generator (generator (integer * 2))))
+         (let ((g (generator (integer * 2))))
            (loop for i from 1 to 100
               do
-                (is (<= (- *size*) (generate generator) 2))))
-         (let ((generator (generator (integer -2 *))))
+                (is (<= (- *size*) (generate g) 2))))
+         (let ((g (generator (integer -2 *))))
            (loop for i from 1 to 100
               do
-                (is (<= -2 (generate generator) *size*))))
-         (let ((generator (generator (integer -2 2))))
+                (is (<= -2 (generate g) *size*))))
+         (let ((g (generator (integer -2 2))))
            (loop for i from 1 to 100
               do
-                (is (<= -2 (generate generator) 2))))
-         (let ((generator (generator (integer))))
+                (is (<= -2 (generate g) 2))))
+         (let ((g (generator (integer))))
            (loop for i from 1 to 100
               do
-                (is (<= (- *size*) (generate generator) *size*)))))))
+                (is (<= (- *size*) (generate g) *size*)))))))
 
 (deftest test-real-generate ()
   (loop for size in (list 10 20 50 300)
      do
        (let ((*size* size))
-         (let ((generator (generator (real * 2))))
+         (let ((g (generator (real * 2))))
            (loop for i from 1 to 100
               do
-                (is (<= (- *size*) (generate generator) 2))))
-         (let ((generator (generator (real -2 *))))
+                (is (<= (- *size*) (generate g) 2))))
+         (let ((g (generator (real -2 *))))
            (loop for i from 1 to 100
               do
-                (is (<= -2 (generate generator) *size*))))
-         (let ((generator (generator (real -2 2))))
+                (is (<= -2 (generate g) *size*))))
+         (let ((g (generator (real -2 2))))
            (loop for i from 1 to 100
               do
-                (is (<= -2 (generate generator) 2))))
-         (let ((generator (generator (real))))
+                (is (<= -2 (generate g) 2))))
+         (let ((g (generator (real))))
            (loop for i from 1 to 100
               do
-                (is (<= (- *size*) (generate generator) *size*)))))))
+                (is (<= (- *size*) (generate g) *size*)))))))
 
 (deftest test-char-generate ()
   (loop for params in '((* *) (* 25) (25 *) (25 26))
-     do (let ((generator (generator (character (first params) (second params)))))
+     do (let ((g (generator (character (first params) (second params)))))
           (loop for i from 1 to 100
              do
                (is (<= (or (and (eq '* (first params)) 0) (first params))
-                       (char-code (generate generator))
+                       (char-code (generate g))
                        (or (and (eq '* (second params)) 127) (second params))))))))
 
 (deftest test-alphanumeric-generate ()
-  (loop for generator in (list (generator (alpha))
-                               (generator (alphanumeric)))
+  (loop for g in (list (generator (alpha))
+                       (generator (alphanumeric)))
      do
        (loop for i from 1 to 100
-        do
-          (let ((random-char (generate generator)))
-            (is (or (<= 48 (char-code random-char) 57)
-                    (<= 65 (char-code random-char) 90)
-                    (<= 97 (char-code random-char) 122)))))))
+          do
+            (let ((random-char (generate g)))
+              (is (or (<= 48 (char-code random-char) 57)
+                      (<= 65 (char-code random-char) 90)
+                      (<= 97 (char-code random-char) 122)))))))
 
 ;;;; Shrink results of generators
 
 (deftest test-int-generate-shrink ()
-  (let ((generator (generator (guard #'positive-integer-p (integer)))))
+  (let ((g (generator (guard #'positive-integer-p (integer)))))
     (loop for i from 1 to 100
        do
-         (is (= (shrink (generate generator) (constantly nil)) 0))))
-  (let ((generator (generator (integer 1))))
+         (is (= (shrink (generate g) (constantly nil)) 0))))
+  (let ((g (generator (integer 1))))
     (loop for i from 1 to 100
        do
-         (is (= (shrink (generate generator) (constantly nil)) 0)))))
+         (is (= (shrink (generate g) (constantly nil)) 0)))))
 
 (deftest test-struct-generate-shrink ()
-  (let ((generator (generator (struct a-struct
-                                      :a-slot (integer)
-                                      :another-slot (integer))))
+  (let ((g (generator (struct a-struct
+                              :a-slot (integer)
+                              :another-slot (integer))))
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
     (loop for i from 1 to 10
        do
-         (is (equalp (shrink (generate generator) (constantly nil))
+         (is (equalp (shrink (generate g) (constantly nil))
                      test-struct)))))
 
 ;;;; Shrink generators themselves
 
 (deftest test-int-generator-shrink ()
   (let ((*size* 30))
-    (let ((generator (generator (integer 5))))
+    (let ((g (generator (integer 5))))
       (loop for i from 1 to 100
          do
            (progn
-             (generate generator)
-             (is (= (shrink generator (lambda (x) (< x 3))) 5))
-             (loop for try = (generate generator)
-                until (>= (cached-value generator) 9))
-             (is (= (shrink generator (lambda (x) (< x 9))) 9)))))
-    (let ((generator (generator (integer * 8))))
+             (generate g)
+             (is (= (shrink g (lambda (x) (< x 3))) 5))
+             (loop for try = (generate g)
+                until (>= (cached-value g) 9))
+             (is (= (shrink g (lambda (x) (< x 9))) 9)))))
+    (let ((g (generator (integer * 8))))
       (loop for i from 1 to 100
          do
            (progn
-             (generate generator)
-             (is (= (shrink generator (lambda (x) (> x 10))) 0))
-             (loop for try = (generate generator)
-                until (<= (cached-value generator) 3))
-             (is (= (shrink generator (lambda (x) (> x 3))) 0))
-             (loop for try = (generate generator)
-                until (<= (cached-value generator) -3))
-             (is (= (shrink generator (lambda (x) (> x -3))) -3)))))
-    (let ((generator (generator (integer 5 9))))
+             (generate g)
+             (is (= (shrink g (lambda (x) (> x 10))) 0))
+             (loop for try = (generate g)
+                until (<= (cached-value g) 3))
+             (is (= (shrink g (lambda (x) (> x 3))) 0))
+             (loop for try = (generate g)
+                until (<= (cached-value g) -3))
+             (is (= (shrink g (lambda (x) (> x -3))) -3)))))
+    (let ((g (generator (integer 5 9))))
       (loop for i from 1 to 100
          do
            (progn
-             (generate generator)
-             (is (= (shrink generator (lambda (x) (< x 3))) 5))
-             (loop for try = (generate generator)
-                until (>= (cached-value generator) 6))
-             (is (= (shrink generator (lambda (x) (< x 6))) 6)))))))
+             (generate g)
+             (is (= (shrink g (lambda (x) (< x 3))) 5))
+             (loop for try = (generate g)
+                until (>= (cached-value g) 6))
+             (is (= (shrink g (lambda (x) (< x 6))) 6)))))))
 
 (deftest test-tuple-generator-shrink ()
-  (let ((generator (generator (tuple (integer) (integer) (integer)))))
+  (let ((g (generator (tuple (integer) (integer) (integer)))))
     (loop for i from 1 to 10
        do
          (progn
-           (generate generator)
-           (is (equal (shrink generator (constantly nil))
+           (generate g)
+           (is (equal (shrink g (constantly nil))
                       (list 0 0 0))))))
-  (let ((generator (generator (tuple
-                               (guard #'greater-than-5 (integer))
-                               (guard #'greater-than-5 (integer))
-                               (guard #'greater-than-5 (integer))))))
+  (let ((g (generator (tuple
+                       (guard #'greater-than-5 (integer))
+                       (guard #'greater-than-5 (integer))
+                       (guard #'greater-than-5 (integer))))))
     (loop for i from 1 to 10
        do
          (progn
-           (generate generator)
+           (generate g)
            (is (every (lambda (x) (= (abs x) 6))
-                      (shrink generator #'tuple-tester))))))
-  (let ((generator (generator (tuple (integer 6)
-                                     (integer 6)
-                                     (integer 6)))))
+                      (shrink g #'tuple-tester))))))
+  (let ((g (generator (tuple (integer 6)
+                             (integer 6)
+                             (integer 6)))))
     (loop for i from 1 to 10
        do
          (progn
-           (generate generator)
+           (generate g)
            (is (every (lambda (x) (= (abs x) 6))
-                      (shrink generator #'tuple-tester)))))))
+                      (shrink g #'tuple-tester)))))))
 
 (deftest test-list-generator-bounds ()
-  (let ((min-generator (generator (integer 0)))
-        (interval-generator (generator (integer 1))))
+  (let ((min-g (generator (integer 0)))
+        (interval-g (generator (integer 1))))
     (loop for i from 1 to 20
        collect
          (progn
-           (let* ((min (generate min-generator))
-                  (interval (generate interval-generator))
-                  (list-generator
+           (let* ((min (generate min-g))
+                  (interval (generate interval-g))
+                  (list-g
                    (generator (list (integer)
                                     :min-length min
                                     :max-length (+ min interval)))))
-             (is (<= min (length (generate list-generator)) (+ min interval)))))))
-  (let ((bound-generator (generator (integer 0))))
+             (is (<= min (length (generate list-g)) (+ min interval)))))))
+  (let ((bound-g (generator (integer 0))))
     (loop for i from 1 to 10
        collect
          (progn
-           (let* ((bound (generate bound-generator))
-                  (list-generator
+           (let* ((bound (generate bound-g))
+                  (list-g
                    (generator (list (integer)
                                     :min-length bound
                                     :max-length bound))))
-             (is (= bound (length (generate list-generator)))))))))
+             (is (= bound (length (generate list-g)))))))))
 
 (deftest test-list-generator-shrink ()
-  (let ((generator (generator
-                    (guard (lambda (l) (> (length l) 5))
-                           (list
-                            (guard #'greater-than-5
-                                   (integer)))))))
+  (let ((g (generator
+            (guard (lambda (l) (> (length l) 5))
+                   (list
+                    (guard #'greater-than-5
+                           (integer)))))))
     (loop for i from 1 to 10
-         do
+       do
          (progn
-           (generate generator)
-           (shrink generator #'list-tester)
-           (is (and (= (length (cached-value generator)) 6)
-                    (every (lambda (x) (= (abs x) 6)) (cached-value generator))))))))
+           (generate g)
+           (shrink g #'list-tester)
+           (is (and (= (length (cached-value g)) 6)
+                    (every (lambda (x) (= (abs x) 6)) (cached-value g))))))))
 
 (deftest test-string-generator-shrink ()
-  (let ((generator (generator (guard (lambda (s) (> (length s) 5))
-                                     (string)))))
+  (let ((g (generator (guard (lambda (s) (> (length s) 5))
+                             (string)))))
     (loop for i from 1 to 10
        do
          (progn
-           (generate generator)
-           (shrink generator (lambda (s) (> 5 (length s))))
-           (is (= (length (cached-value generator)) 6))))))
+           (generate g)
+           (shrink g (lambda (s) (> 5 (length s))))
+           (is (= (length (cached-value g)) 6))))))
 
 (deftest test-struct-generator-shrink ()
-  (let ((generator (generator (struct a-struct
-                                      :a-slot (guard #'greater-than-5 (integer))
-                                      :another-slot (guard #'greater-than-5 (integer))))))
+  (let ((g (generator (struct a-struct
+                              :a-slot (guard #'greater-than-5 (integer))
+                              :another-slot (guard #'greater-than-5 (integer))))))
     (loop for i from 1 to 10
        do
          (progn
-           (generate generator)
-           (shrink generator (lambda (x)
-                               (or (< (abs (a-struct-a-slot x)) 5)
-                                   (< (abs (a-struct-another-slot x)) 5))))
-           (is (and (= (abs (a-struct-a-slot (cached-value generator))) 6)
-                    (= (abs (a-struct-another-slot (cached-value generator))) 6)))))))
+           (generate g)
+           (shrink g (lambda (x)
+                       (or (< (abs (a-struct-a-slot x)) 5)
+                           (< (abs (a-struct-another-slot x)) 5))))
+           (is (and (= (abs (a-struct-a-slot (cached-value g))) 6)
+                    (= (abs (a-struct-another-slot (cached-value g))) 6)))))))
 
 (deftest test-or-generator-shrink ()
   ;; ensure or-generator won't hop to a nonconstant alternative
   (let ((*size* 25)
-        (generator (generator (or
-                               (integer 15 20)
-                               (integer 5 10)))))
+        (g (generator (or
+                       (integer 15 20)
+                       (integer 5 10)))))
     (loop for i from 1 to 100
        do
          (progn
-           (loop for try = (generate generator)
-              until (>= (cached-value generator) 15))
-           (is (= (shrink generator (constantly nil)) 15))))))
+           (loop for try = (generate g)
+              until (>= (cached-value g) 15))
+           (is (= (shrink g (constantly nil)) 15))))))
 
 (defgenerator derp ()
   `(generator (or (integer) (derp))))
 
 (deftest test-custom-generator ()
-  (let ((generator (generator (derp)))
+  (let ((g (generator (derp)))
         (*size* 10))
     (loop for i from 1 to 20
        do
-         (is (<= -10 (generate generator) 10)))))
+         (is (<= -10 (generate g) 10)))))
 
 (defgenerator herp ()
   `(generator (or (integer 10) (herp))))
 
 (deftest test-custom-generator-shrink ()
-  (let ((generator (generator (herp)))
+  (let ((g (generator (herp)))
         (*size* 20))
     (loop for i from 1 to 20
-         do
+       do
          (progn
-           (generate generator)
-           (is (= (shrink generator #'int-tester) 10))))))
+           (generate g)
+           (is (= (shrink g #'int-tester) 10))))))
 
 (deftest test-check-it ()
   (let ((*num-trials* 50))
@@ -270,20 +270,20 @@
 (deftest test-chained-generator ()
   (let ((*list-size* 100)
         (*size* 100)
-        (generator
+        (g
          (generator
           (chain ((x (integer 10 12))
                   (y (integer 18 20)))
-                   (generator (list (integer) :min-length x :max-length y))))))
+            (generator (list (integer) :min-length x :max-length y))))))
     (let ((lengths
            (loop for i from 1 to 50
-                collect (length (generate generator)))))
+              collect (length (generate g)))))
       (is (<= 10 (apply #'min lengths) (apply #'max lengths) 20)))
     (loop for i from 1 to 20
-         collect
+       collect
          (progn
-           (generate generator)
-           (is (<= 10 (length (shrink generator (lambda (x) (= (length x) 5)))) 12))))
-    (is (check-it generator
+           (generate g)
+           (is (<= 10 (length (shrink g (lambda (x) (= (length x) 5)))) 12))))
+    (is (check-it g
                   (lambda (x) (<= 10 (length x) 20))
                   :examples (list (iota 10) (iota 20))))))
