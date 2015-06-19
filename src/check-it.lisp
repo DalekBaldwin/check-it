@@ -42,13 +42,23 @@
         regression-file))
 
 (defun check-it% (test-form generator test
-                  &key (random-state t)
+                  &key
+                    examples
+                    (random-state t)
                     (regression-id nil regression-id-supplied)
                     (regression-file (when regression-id-supplied
                                        (gethash
                                         (symbol-package regression-id)
                                         *package-regression-files*))))
   (block trial-run
+    (loop for example in examples
+       do
+         (let ((passed (funcall test example)))
+           (unless passed
+             (format *check-it-output* "~&Test ~A failed on example arg ~A~%"
+                     test-form
+                     example)
+             (return-from trial-run nil))))
     (when regression-id
       (loop for regression-case in (get regression-id 'regression-cases)
          do
@@ -86,10 +96,12 @@
 
 (defmacro check-it (generator test
                     &key
+                      examples
                       (random-state t random-state-supplied)
                       (regression-id nil regression-id-supplied)
                       (regression-file nil regression-file-supplied))
   `(check-it% ',test ,generator ,test
+              :examples ,examples
               ,@(when random-state-supplied `(:random-state ,random-state))
               ,@(when regression-id-supplied `(:regression-id ',regression-id))
               ,@(when regression-file-supplied `(:regression-file ,regression-file))))

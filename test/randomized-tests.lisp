@@ -234,7 +234,8 @@
 (deftest test-check-it ()
   (let ((*num-trials* 50))
     (is (check-it (generator (integer))
-                  (lambda (x) (<= x *size*))))))
+                  (lambda (x) (<= x *size*))
+                  :examples (list *size*)))))
 
 (deftest test-chained-generator ()
   (let ((*list-size* 100)
@@ -253,4 +254,6 @@
          (progn
            (generate generator)
            (is (<= 10 (length (shrink generator (lambda (x) (= (length x) 5)))) 12))))
-    (is (check-it generator (lambda (x) (<= 10 (length x) 20))))))
+    (is (check-it generator
+                  (lambda (x) (<= 10 (length x) 20))
+                  :examples (list (iota 10) (iota 20))))))
