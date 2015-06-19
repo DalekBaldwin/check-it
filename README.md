@@ -142,7 +142,7 @@ In order to use this kind of generator, the struct type must have a default cons
 
 ### Mapped Generators
 
-A mapped generator applies a transformation to their subgenerator. The transformation function should not mutate its argument.
+A mapped generator applies a transformation to its subgenerator. The transformation function should not mutate its argument.
 
 ```lisp
 (let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
