@@ -170,8 +170,6 @@ that of the alternative that was originally tried."
                 for sub-generator in sub-generators
                 for i from 0
                 do
-                ;; this is wrong... need separate generators for each value
-                ;;(setf (cached-value sub) elem)
                   (let ((shrunk-elem
                          (shrink sub-generator
                                  (lambda (x)
