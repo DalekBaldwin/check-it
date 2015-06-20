@@ -240,7 +240,7 @@
            (is (= (shrink g (constantly nil)) 15))))))
 
 (defgenerator derp ()
-  `(generator (or (integer) (derp))))
+  (generator (or (integer) (derp))))
 
 (deftest test-custom-generator ()
   (let ((g (generator (derp)))
@@ -250,7 +250,7 @@
          (is (<= -10 (generate g) 10)))))
 
 (defgenerator herp ()
-  `(generator (or (integer 10) (herp))))
+  (generator (or (integer 10) (herp))))
 
 (deftest test-custom-generator-shrink ()
   (let ((g (generator (herp)))

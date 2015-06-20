@@ -556,7 +556,11 @@
         (cond
           ((get (first exp) 'generator)
            (let* ((gen-name (first exp)))
-             `(make-instance ',gen-name)))
+             `(make-instance ',gen-name
+                             ,@(loop for arg in (rest exp)
+                                  for param in (get (first exp) 'generator-params)
+                                  collect param
+                                  collect arg))))
           (t exp)))))
     (t exp)))
 
@@ -564,20 +568,23 @@
   (expand-generator exp))
 
 (defmacro defgenerator (name params &body body)
-  (declare (ignorable params))
-  (with-gensyms (gen-form)
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (defclass ,name (custom-generator)
-         ((bias
-           :initform 1.0
-           :accessor bias
-           :allocation :class)))
-       (setf (get ',name 'generator) t)
-       (defmethod generate ((generator ,name))
-         (generate
-          (if (slot-boundp generator 'sub-generator)
-              (sub-generator generator)
-              (setf (sub-generator generator)
-                    (macrolet ((,gen-form ()
-                                 `(progn ,@(list ,@body))))
-                      (,gen-form)))))))))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (defclass ,name (custom-generator)
+       ((bias
+         :initform 1.0
+         :accessor bias
+         :allocation :class)
+        ,@(loop for param in params
+             collect `(,param
+                       :initarg ,(make-keyword param)))))
+     (setf (get ',name 'generator) t)
+     (setf (get ',name 'generator-params)
+           (list ,@(mapcar #'make-keyword params)))
+     (defmethod generate ((generator ,name))
+       (generate
+        (if (slot-boundp generator 'sub-generator)
+            (sub-generator generator)
+            (setf (sub-generator generator)
+                  (let (,@(loop for param in params
+                             collect `(,param (slot-value generator ',param))))
+                    ,@body)))))))
