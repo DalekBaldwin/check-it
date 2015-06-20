@@ -85,9 +85,12 @@
     (setf generator-function (char-generator-function lower-limit upper-limit))))
 
 (defclass list-generator (generator)
-  ((sub-generator
-    :initarg :sub-generator
-    :accessor sub-generator)
+  ((generator-function
+    :initarg :generator-function
+    :accessor generator-function)
+   (sub-generators
+    :initarg :sub-generators
+    :accessor sub-generators)
    (min-length
     :initarg :min-length
     :accessor min-length
@@ -101,25 +104,27 @@
   ((cached-str-list
     :accessor cached-str-list)))
 
+(defun string-generator-function ()
+  (make-instance 'or-generator
+                 :sub-generators (list (make-instance 'char-generator
+                                                      :lower-limit
+                                                      #.(char-code #\A)
+                                                      :upper-limit
+                                                      #.(char-code #\Z))
+                                       (make-instance 'char-generator
+                                                      :lower-limit
+                                                      #.(char-code #\a)
+                                                      :upper-limit
+                                                      #.(char-code #\z))
+                                       (make-instance 'char-generator
+                                                      :lower-limit
+                                                      #.(char-code #\0)
+                                                      :upper-limit
+                                                      #.(char-code #\9)))))
+
 (defmethod initialize-instance :after ((generator string-generator) &rest initargs)
   (declare (ignore initargs))
-  (setf (sub-generator generator)
-        (make-instance 'or-generator
-                       :sub-generators (list (make-instance 'char-generator
-                                                            :lower-limit
-                                                            #.(char-code #\A)
-                                                            :upper-limit
-                                                            #.(char-code #\Z))
-                                             (make-instance 'char-generator
-                                                            :lower-limit
-                                                            #.(char-code #\a)
-                                                            :upper-limit
-                                                            #.(char-code #\z))
-                                             (make-instance 'char-generator
-                                                            :lower-limit
-                                                            #.(char-code #\0)
-                                                            :upper-limit
-                                                            #.(char-code #\9))))))
+  (setf (generator-function generator) #'string-generator-function))
 
 (defclass tuple-generator (generator)
   ((sub-generators
@@ -195,11 +200,16 @@
   (setf (cached-value generator) (call-next-method)))
 
 (defmethod generate ((generator list-generator))
-  (with-obvious-accessors (sub-generator min-length max-length) generator
+  (with-obvious-accessors (generator-function
+                           sub-generators
+                           min-length
+                           max-length) generator
     (let ((rand-length
            (+ min-length
               (random (- (min (1+ max-length) *list-size*) min-length)))))
-      (loop repeat (max rand-length min-length)
+      (setf sub-generators (loop repeat (max rand-length min-length)
+                              collect (funcall generator-function)))
+      (loop for sub-generator in sub-generators
          collect
            (let ((*list-size* (floor (* *list-size* *list-size-decay*))))
              (generate sub-generator))))))
@@ -494,9 +504,10 @@
         (when (null (second exp))
           (error "LIST generator requires a subgenerator"))
         (destructuring-bind (sub-generator &rest keys) (rest exp)
-          `(make-instance 'list-generator
-                          :sub-generator ,(expand-generator sub-generator)
-                          ,@keys)))
+          `(make-instance
+            'list-generator
+            :generator-function (lambda () ,(expand-generator sub-generator))
+            ,@keys)))
        (string
         `(make-instance 'string-generator))
        (tuple

@@ -160,42 +160,49 @@ that of the alternative that was originally tried."
 (defmethod shrink ((value list-generator) test)
   (shrink-list-generator value test))
 
+;; we could almost store a single subgenerator on a `list` generator and reset
+;; its cached-value for every shrink attempt, but `or` generators must also keep
+;; track of which one of their subgenerators they used to shrink correctly
 (defun shrink-list-generator (value test)
-  (with-obvious-accessors (cached-value sub-generator min-length) value
+  (with-obvious-accessors (cached-value sub-generators min-length) value
     (flet ((elem-wise-shrink ()
-             (loop for i from 0
-                for elem in cached-value
+             (loop
+                for sub-generator in sub-generators
+                for i from 0
                 do
-                  (progn
-                    (setf (cached-value sub-generator) elem)
-                    (let ((shrunk-elem
-                           (shrink sub-generator
-                                   (lambda (x)
-                                     ;; test if elem can be replaced with a
-                                     ;; particular value and still fail
-                                     (handler-case
-                                         (funcall test
-                                                  (let ((test-list (copy-list cached-value)))
-                                                    (setf (nth i test-list) x)
-                                                    test-list))
-                                       (error () nil))))))
-                      ;; now actually replace it with the best value
-                      (setf (nth i cached-value) shrunk-elem))))
+                ;; this is wrong... need separate generators for each value
+                ;;(setf (cached-value sub) elem)
+                  (let ((shrunk-elem
+                         (shrink sub-generator
+                                 (lambda (x)
+                                   ;; test if elem can be replaced with a
+                                   ;; particular value and still fail
+                                   (handler-case
+                                       (funcall test
+                                                (let ((test-list
+                                                       (copy-list cached-value)))
+                                                  (setf (nth i test-list) x)
+                                                  test-list))
+                                     (error () nil))))))
+                    ;; now actually replace it with the best value
+                    (setf (nth i cached-value) shrunk-elem)))
              cached-value))
       (cond
         ((endp cached-value)
          ;; can't shrink nil!
          cached-value)
         ((= (length cached-value) min-length)
-         cached-value)
+         (elem-wise-shrink))
         (t
          (let ((can-shrink-lengthwise
                 (block remove-one-elem
-                  (loop for i from 0 below (length cached-value)
+                  (loop for i from min-length below (length cached-value)
                      do
-                       (let ((shrunk-list (remove-nth i cached-value)))
+                       (let ((shrunk-list (remove-nth i cached-value))
+                             (shrunk-subs (remove-nth i sub-generators)))
                          (unless (funcall test shrunk-list)
-                           (setf cached-value shrunk-list)
+                           (setf cached-value shrunk-list
+                                 sub-generators shrunk-subs)
                            (return-from remove-one-elem t))))
                   (return-from remove-one-elem nil))))
            (if (not can-shrink-lengthwise)
@@ -206,7 +213,7 @@ that of the alternative that was originally tried."
 
 (defmethod shrink ((value tuple-generator) test)
   (with-obvious-accessors (cached-value sub-generators) value
-    (loop for cached-elem in cached-value
+    (loop
        for sub-generator in sub-generators
        for i from 0
        do
