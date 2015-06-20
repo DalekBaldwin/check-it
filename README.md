@@ -186,7 +186,7 @@ If you provide only a name for a parameterizer instead of a list containing a na
 
 You can define your own generator types with `defgenerator`.
 
-User-defined generators can take arguments; these should be constant values, evaluated at the time of a generator object's construction. They can also be recursive. Here's a useless example:
+User-defined generators can take arguments, evaluated at the time of a generator object's construction. They can also be recursive (in which case recursive definition is evaluated anew to construct a generator, allowing child recursions be parameterized by parent recursions). Here's a useless example:
 
 ```lisp
 ;; same range of values as (integer x)
