@@ -196,7 +196,7 @@ that of the alternative that was originally tried."
         (t
          (let ((can-shrink-lengthwise
                 (block remove-one-elem
-                  (loop for i from min-length below (length cached-value)
+                  (loop for i from 0 below (length cached-value)
                      do
                        (let ((shrunk-list (remove-nth i cached-value))
                              (shrunk-subs (remove-nth i sub-generators)))
