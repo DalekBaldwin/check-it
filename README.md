@@ -184,11 +184,13 @@ If you provide only a name for a parameterizer instead of a list containing a na
 
 ### User-Defined Generators
 
-You can define your own generator types with `defgenerator`. User-defined generator types can be recursive. Here's a useless example:
+You can define your own generator types with `defgenerator`.
+
+User-defined generators can take arguments; these should be constant values, evaluated at the time of a generator object's construction. They can also be recursive. Here's a useless example:
 
 ```lisp
-;; same range of values as (integer)
-(defgenerator recursive () `(generator (or (integer) (recursive))))
+;; same range of values as (integer x)
+(defgenerator recursive (x) (generator (or (integer x) (recursive x))))
 ```
 
 With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen the feedback explosion of recursively-generated data structures.
@@ -198,15 +200,15 @@ When a user-defined generator appears as an alternative in an `or` generator, it
 ```lisp
 ;; normally there would be an 87.5% chance of recursing on each generation
 ;; essentially guaranteeing unbounded growth
-(defgenerator tuple-explode ()
-  `(generator (tuple (or (integer) (tuple-explode))
-                     (or (integer) (tuple-explode))
-                     (or (integer) (tuple-explode)))))
+(defgenerator tuple-explode (x)
+  (generator (tuple (or x (tuple-explode (+ 1 x)))
+                    (or x (tuple-explode (+ 1 x)))
+                    (or x (tuple-explode (+ 1 x))))))
 
 (let ((*recursive-bias-decay* 1.2)
       (*bias-sensitivity* 1.5))
-  (generate (generator (tuple-explode))))
-;; sample result: ((((-6 ((9 -10 2) 8 -7) 8) 9 9) 8 2) 7 5)
+  (generate (generator (tuple-explode 0))))
+;; sample result: (0 0 (1 1 ((3 (4 4 (5 5 5)) (4 4 (5 5 5))) (3 3 3) 2)))
 ```
 
 The change in bias at each recursive step is controlled by the parameter `*recursive-bias-decay*`, and the way biases of different alternatives interact to produce the actual relative probabilities is controlled by `*bias-sensitivity*`. The whole apparatus is set up in such a way that these parameters can be tuned without causing one alternative's probability to sharply shoot off toward zero or one, so you can play around with them and discover values that produce a reasonable distribution for your needs.
@@ -215,7 +217,7 @@ Additionally, the maximum possible list length is reduced with every `list` gene
 
 ```lisp
 (defgenerator list-explode ()
-  `(generator (or (integer) (list (list-explode)))))
+  (generator (or (integer) (list (list-explode)))))
 
 (let ((*list-size* 10))
   (generate (generator (list-explode))))
@@ -229,7 +231,7 @@ But it's your responsibility not to write type specs that can't possibly generat
 
 ```lisp
 (defgenerator inherently-unbounded ()
-  `(generator (tuple (integer) (inherently-unbounded))))
+  (generator (tuple (integer) (inherently-unbounded))))
 ```
 
 ## Checking
