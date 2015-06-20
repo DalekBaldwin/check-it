@@ -427,50 +427,53 @@
        (boolean
         `(make-instance 'bool-generator))
        (integer
-        `(make-instance 'int-generator
-                        ,@(let ((lower (second exp)))
-                               (when lower
-                                 (append
-                                  (list :lower-limit
-                                        (if (eql lower '*)
-                                            ''*
-                                            lower))
-                                  (let ((upper (third exp)))
-                                    (when upper
-                                      (list :upper-limit
-                                            (if (eql upper '*)
-                                                ''*
-                                                upper)))))))))
+        `(make-instance
+          'int-generator
+          ,@(destructuring-bind
+             (&optional lower upper) (rest exp)
+             (append
+              (when lower
+                (list :lower-limit
+                      (if (eql lower '*)
+                          ''*
+                          lower)))
+              (when upper
+                (list :upper-limit
+                      (if (eql upper '*)
+                          ''*
+                          upper)))))))
        (real
-        `(make-instance 'real-generator
-                        ,@(let ((lower (second exp)))
-                               (when lower
-                                 (append
-                                  (list :lower-limit
-                                        (if (eql lower '*)
-                                            ''*
-                                            lower))
-                                  (let ((upper (third exp)))
-                                    (when upper
-                                      (list :upper-limit
-                                            (if (eql upper '*)
-                                                ''*
-                                                upper)))))))))
+        `(make-instance
+          'real-generator
+          ,@(destructuring-bind
+             (&optional lower upper) (rest exp)
+             (append
+              (when lower
+                (list :lower-limit
+                      (if (eql lower '*)
+                          ''*
+                          lower)))
+              (when upper
+                (list :upper-limit
+                      (if (eql upper '*)
+                          ''*
+                          upper)))))))
        (character
-        `(make-instance 'char-generator
-                        ,@(let ((lower (second exp)))
-                               (when lower
-                                 (append
-                                  (list :lower-limit
-                                        (if (eql lower '*)
-                                            ''*
-                                            lower))
-                                  (let ((upper (third exp)))
-                                    (when upper
-                                      (list :upper-limit
-                                            (if (eql upper '*)
-                                                ''*
-                                                upper)))))))))
+        `(make-instance
+          'char-generator
+          ,@(destructuring-bind
+             (&optional lower upper) (rest exp)
+             (append
+              (when lower
+                (list :lower-limit
+                      (if (eql lower '*)
+                          ''*
+                          lower)))
+              (when upper
+                (list :upper-limit
+                      (if (eql upper '*)
+                          ''*
+                          upper)))))))
        (alpha
         `(make-instance 'or-generator
                         :sub-generators
