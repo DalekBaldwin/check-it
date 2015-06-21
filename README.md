@@ -15,9 +15,11 @@ This is a randomized property-based testing library for Common Lisp. Rather than
     * [Mapped Generators](#mapped-generators)
     * [Chained Generators](#chained-generators)
     * [User-Defined Generators](#user-defined-generators)
+    * [Generator Macros](#generator-macros)
   * [Checking](#checking)
     * [Regression Cases](#regression-cases)
   * [Shrinking](#shrinking)
+
 
 ## Generating
 
@@ -232,6 +234,18 @@ But it's your responsibility not to write type specs that can't possibly generat
 ```lisp
 (def-generator inherently-unbounded ()
   (generator (tuple (integer) (inherently-unbounded))))
+```
+
+### Generator Macros
+
+You can define transformations using destructuring lambda lists that work just like macros within the generator DSL.
+
+```lisp
+(def-genex-macro maybe (form)
+  `(or nil ,form))
+
+(generate (generator (list (maybe (integer)))))
+;; sample result: (NIL NIL NIL NIL 7 -4 2 NIL NIL 3 7 -8 NIL 7)
 ```
 
 ## Checking
