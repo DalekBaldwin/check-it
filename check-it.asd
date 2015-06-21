@@ -40,7 +40,6 @@
   ((:module :test
             :components ((:file "package")
                          (:file "check-it-test")
-                         (:file "regression-cases")
                          (:file "deterministic-tests")
                          (:file "randomized-tests")
                          (:file "for-travis"))))
