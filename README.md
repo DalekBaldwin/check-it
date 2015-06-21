@@ -207,6 +207,16 @@ User-defined generators can take arguments, evaluated at the time of a generator
 (def-generator recursive (x) (generator (or (integer x) (recursive x))))
 ```
 
+You can also create higher-order recursive generators. However, each subgenerator needs to be a unique object for check-it to work correctly, so you need to explicitly create them like this:
+
+```lisp
+(def-generator higher-order (generator-maker)
+  (generator (or (funcall generator-maker)
+                 (higher-order generator-maker))))
+
+(generate (generator (higher-order (lambda () (generator (integer))))))
+```
+
 With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen the feedback explosion of recursively-generated data structures.
 
 When a user-defined generator appears as an alternative in an `or` generator, its relative probability of being chosen decreases with each recursive descent.
