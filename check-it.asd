@@ -13,6 +13,7 @@
   :long-description
   #.(uiop:read-file-string
      (uiop:subpathname *load-pathname* "README.md"))
+  :homepage "https://github.com/DalekBaldwin/check-it"
   :components
   ((:static-file "check-it.asd")
    (:module :src
@@ -32,10 +33,14 @@
 (defsystem :check-it-test
   :name "check-it-test"
   :serial t
+  :author "Kyle Littler"
+  :license "LLGPL"
+  :description "Tests for check-it."
   :components
   ((:module :test
             :components ((:file "package")
                          (:file "check-it-test")
+                         (:file "regression-cases")
                          (:file "deterministic-tests")
                          (:file "randomized-tests")
                          (:file "for-travis"))))
