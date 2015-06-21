@@ -184,13 +184,13 @@ If you provide only a name for a parameterizer instead of a list containing a na
 
 ### User-Defined Generators
 
-You can define your own generator types with `defgenerator`.
+You can define your own generator types with `def-generator`.
 
 User-defined generators can take arguments, evaluated at the time of a generator object's construction. They can also be recursive (in which case recursive definition is evaluated anew to construct a generator, allowing child recursions be parameterized by parent recursions). Here's a useless example:
 
 ```lisp
 ;; same range of values as (integer x)
-(defgenerator recursive (x) (generator (or (integer x) (recursive x))))
+(def-generator recursive (x) (generator (or (integer x) (recursive x))))
 ```
 
 With naive generation strategies, recursive generators can easily generate values of unbounded size. There are currently two ways to dampen the feedback explosion of recursively-generated data structures.
@@ -200,7 +200,7 @@ When a user-defined generator appears as an alternative in an `or` generator, it
 ```lisp
 ;; normally there would be an 87.5% chance of recursing on each generation
 ;; essentially guaranteeing unbounded growth
-(defgenerator tuple-explode (x)
+(def-generator tuple-explode (x)
   (generator (tuple (or x (tuple-explode (+ 1 x)))
                     (or x (tuple-explode (+ 1 x)))
                     (or x (tuple-explode (+ 1 x))))))
@@ -216,7 +216,7 @@ The change in bias at each recursive step is controlled by the parameter `*recur
 Additionally, the maximum possible list length is reduced with every `list` generation that occurs within the dynamic scope of another `list` generation.
 
 ```lisp
-(defgenerator list-explode ()
+(def-generator list-explode ()
   (generator (or (integer) (list (list-explode)))))
 
 (let ((*list-size* 10))
@@ -230,7 +230,7 @@ Additionally, the maximum possible list length is reduced with every `list` gene
 But it's your responsibility not to write type specs that can't possibly generate anything other than unbounded values.
 
 ```lisp
-(defgenerator inherently-unbounded ()
+(def-generator inherently-unbounded ()
   (generator (tuple (integer) (inherently-unbounded))))
 ```
 

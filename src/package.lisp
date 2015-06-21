@@ -44,7 +44,8 @@
            #:slot-names
            #:slot-generators
 
-           #:defgenerator
+           #:def-generator
+           #:def-genex-macro
 
            #:*check-it-output*
            #:register-package-regression-file

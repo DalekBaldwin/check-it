@@ -239,7 +239,7 @@
               until (>= (cached-value g) 15))
            (is (= (shrink g (constantly nil)) 15))))))
 
-(defgenerator derp ()
+(def-generator derp ()
   (generator (or (integer) (derp))))
 
 (deftest test-custom-generator ()
@@ -249,7 +249,7 @@
        do
          (is (<= -10 (generate g) 10)))))
 
-(defgenerator herp ()
+(def-generator herp ()
   (generator (or (integer 10) (herp))))
 
 (deftest test-custom-generator-shrink ()

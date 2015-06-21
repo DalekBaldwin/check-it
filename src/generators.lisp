@@ -567,21 +567,26 @@
                                :pre-generators (list ,@binding-gens)
                                :generator-function (lambda ,binding-vars ,@body)))))
        (otherwise
-        (cond
-          ((get (first exp) 'generator)
+        (case (get (first exp) 'genex-type)
+          (generator
            (let* ((gen-name (first exp)))
              `(make-instance ',gen-name
                              ,@(loop for arg in (rest exp)
                                   for param in (get (first exp) 'generator-params)
                                   collect param
                                   collect arg))))
-          (t exp)))))
+          (macro
+           (expand-generator
+            (funcall (get (first exp) 'genex-macro)
+                     (rest exp))))
+          (otherwise
+           exp)))))
     (t exp)))
 
 (defmacro generator (exp)
   (expand-generator exp))
 
-(defmacro defgenerator (name params &body body)
+(defmacro def-generator (name params &body body)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (defclass ,name (custom-generator)
        ((bias
@@ -591,7 +596,7 @@
         ,@(loop for param in params
              collect `(,param
                        :initarg ,(make-keyword param)))))
-     (setf (get ',name 'generator) t)
+     (setf (get ',name 'genex-type) 'generator)
      (setf (get ',name 'generator-params)
            (list ,@(mapcar #'make-keyword params)))
      (defmethod generate ((generator ,name))
@@ -602,3 +607,16 @@
                   (let (,@(loop for param in params
                              collect `(,param (slot-value generator ',param))))
                     ,@body)))))))
+
+(defmacro destructuring-lambda (params &body body)
+  (with-gensyms (shallow-params)
+    `(lambda (&rest ,shallow-params)
+       (destructuring-bind (,params) ,shallow-params
+         ,@body))))
+
+(defmacro def-genex-macro (name lambda-list &body body)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (setf (get ',name 'genex-type) 'macro)
+     (setf (get ',name 'genex-macro)
+           (destructuring-lambda ,lambda-list
+             ,@body))))
