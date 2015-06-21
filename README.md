@@ -238,7 +238,7 @@ But it's your responsibility not to write type specs that can't possibly generat
 
 ### Generator Macros
 
-You can define transformations using destructuring lambda lists that work just like macros within the generator DSL.
+You can define transformations using destructuring lambda lists that work just like macros within the generator DSL. These will be expanded in any place where a generator expression would be expected.
 
 ```lisp
 (def-genex-macro maybe (form)
