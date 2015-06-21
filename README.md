@@ -4,6 +4,8 @@
 
 This is a randomized property-based testing library for Common Lisp. Rather than being a full-fledged general test framework in its own right, it's designed to embed randomized tests in whatever framework you like.
 
+The basic idea behind QuickCheck-style tools is simple, but they become complicated as different features interact, so some behaviors and API details may not be stable. I recommend that you configure your projects' test systems to optionally exclude check-it tests (e.g. by keeping them all in a separate package from your other tests) so that a breaking change won't impede your development workflow too much.
+
 ## Table of Contents
   * [Generating](#generating)
     * [Number Generators](#number-generators)
@@ -19,7 +21,6 @@ This is a randomized property-based testing library for Common Lisp. Rather than
   * [Checking](#checking)
     * [Regression Cases](#regression-cases)
   * [Shrinking](#shrinking)
-
 
 ## Generating
 
