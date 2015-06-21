@@ -62,7 +62,7 @@ You could even do things like this if you wanted:
   (generator (real 0 x)))
 ```
 
-But you should probably use a combinating generator type like `map` or `chain` instead.
+But you should probably define a custom generator type or use a combinator like `map` or `chain` instead.
 
 In addition to the constraints you choose in the type specifier, the absolute values of generated numbers are also bounded by the parameter `*size*`.
 
