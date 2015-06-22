@@ -55,13 +55,13 @@
     (handler-case
         (funcall test arg)
       (error (c)
-        (make-instance 'reified-error c)))))
+        (make-instance 'reified-error :wrapped-error c)))))
 
 (defun wrap-test-for-shrinking (test)
   (lambda (arg)
     (handler-case
         (funcall test arg)
-      (error (c) nil))))
+      (error () nil))))
 
 (defun check-it% (test-form generator test
                   &key

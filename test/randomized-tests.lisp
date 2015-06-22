@@ -104,9 +104,10 @@
 ;;;; Shrink generators themselves
 
 (deftest test-shrink-error ()
+  ;; errors should be caught and treated as test failures in shrinking
   (let ((g (generator (integer))))
-    (loop for i from 1 to 10
-         do
+    (loop for i from 1 to 30
+       do
          (progn
            (generate g)
            (is (= (shrink-and-trap-errors
@@ -273,10 +274,28 @@
            (is (= (shrink-and-trap-errors g #'int-tester) 10))))))
 
 (deftest test-check-it ()
-  (let ((*num-trials* 50))
+  (let ((*num-trials* 50)
+        (*check-it-output* nil))
     (is (check-it (generator (integer))
                   (lambda (x) (<= x *size*))
                   :examples (list *size*)))))
+
+(define-condition test-error (error)
+  ())
+
+(deftest test-check-it-should-error ()
+  (let ((*check-it-output* nil)
+        (g (generator (integer))))
+    (is (check-it g
+                  (lambda (x)
+                    (handler-case
+                        (progn
+                          (error 'test-error)
+                          nil)
+                      (test-error ()
+                        t)))))))
+
+
 
 (deftest test-chained-generator ()
   (let ((*list-size* 100)
@@ -295,9 +314,11 @@
          (progn
            (generate g)
            (is (<= 10 (length (shrink-and-trap-errors g (lambda (x) (= (length x) 5)))) 12))))
-    (is (check-it g
-                  (lambda (x) (<= 10 (length x) 20))
-                  :examples (list (iota 10) (iota 20))))))
+    (let ((*check-it-output* nil))
+      (is
+       (check-it g
+                 (lambda (x) (<= 10 (length x) 20))
+                 :examples (list (iota 10) (iota 20)))))))
 
 (deftest test-mapped-generator-shrink ()
   (let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
