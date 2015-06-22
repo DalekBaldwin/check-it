@@ -282,6 +282,8 @@ Use the `check-it` macro to perform a test run. Here's another useless example:
 
 This will generate `*num-trials*` random values and test them against the test predicate. If a random value fails, check-it will search for values of smaller complexity until it finds the least complex value it can that fails the test while respecting the generator's composite type spec, and print a failure description to `*check-it-output*`.
 
+If the test predicate signals an uncaught error, `check-it` will catch it and treat it as a test failure, both for the initial test and the search for smaller failing values. If you want to test for an expected error, you should explicitly handle it within the test predicate and return a non-`nil` value.
+
 `check-it` itself returns `t` if every trial passed and `nil` if one failed, so you can embed `check-it` forms within whatever test framework you're already using. Here's what a check-it test might look like using Stefil:
 
 ```lisp
@@ -319,8 +321,6 @@ It is recommended that you output your regression cases to a special file that i
 Eventually, check-it will be integrated more elegantly with individual test frameworks by extending their APIs. For now, you can reduce code repetition by declaring a file to output regression cases for all `regression-id`s in a given package with `(register-package-regression-file :package file)`, so you don't have to mention the file in each test.
 
 You can also provide a list of explicit inline examples that will also be checked before any random cases are generated using the `:examples` keyword argument to `check-it`.
-
-If the test predicate signals an uncaught error, `check-it` will catch it and treat it as a test failure.
 
 ## Shrinking
 
