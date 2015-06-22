@@ -320,6 +320,8 @@ Eventually, check-it will be integrated more elegantly with individual test fram
 
 You can also provide a list of explicit inline examples that will also be checked before any random cases are generated using the `:examples` keyword argument to `check-it`.
 
+If the test predicate signals an uncaught error, `check-it` will catch it and treat it as a test failure.
+
 ## Shrinking
 
 When a generated value fails a test, check-it searches for a simpler value as follows:
