@@ -3,6 +3,7 @@
 (defpackage :check-it
   (:use :cl :alexandria :optima)
   (:export #:shrink
+           #:shrink-and-trap-errors
 
            #:*size*
            #:*list-size*
@@ -46,6 +47,9 @@
 
            #:def-generator
            #:def-genex-macro
+           
+           #:wrap-test-for-error-reporting
+           #:wrap-test-for-shrinking
 
            #:*check-it-output*
            #:register-package-regression-file

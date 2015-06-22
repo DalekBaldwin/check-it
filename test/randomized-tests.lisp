@@ -85,11 +85,11 @@
   (let ((g (generator (guard #'positive-integer-p (integer)))))
     (loop for i from 1 to 100
        do
-         (is (= (shrink (generate g) (constantly nil)) 0))))
+         (is (= (shrink-and-trap-errors (generate g) (constantly nil)) 0))))
   (let ((g (generator (integer 1))))
     (loop for i from 1 to 100
        do
-         (is (= (shrink (generate g) (constantly nil)) 0)))))
+         (is (= (shrink-and-trap-errors (generate g) (constantly nil)) 0)))))
 
 (deftest test-struct-generate-shrink ()
   (let ((g (generator (struct a-struct
@@ -98,10 +98,21 @@
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
     (loop for i from 1 to 10
        do
-         (is (equalp (shrink (generate g) (constantly nil))
+         (is (equalp (shrink-and-trap-errors (generate g) (constantly nil))
                      test-struct)))))
 
 ;;;; Shrink generators themselves
+
+(deftest test-shrink-error ()
+  (let ((g (generator (integer))))
+    (loop for i from 1 to 10
+         do
+         (progn
+           (generate g)
+           (is (= (shrink-and-trap-errors
+                   g
+                   (lambda (x) (declare (ignore x)) (error "barf")))
+                  0))))))
 
 (deftest test-int-generator-shrink ()
   (let ((*size* 30))
@@ -110,31 +121,31 @@
          do
            (progn
              (generate g)
-             (is (= (shrink g (lambda (x) (< x 3))) 5))
+             (is (= (shrink-and-trap-errors g (lambda (x) (< x 3))) 5))
              (loop for try = (generate g)
                 until (>= (cached-value g) 9))
-             (is (= (shrink g (lambda (x) (< x 9))) 9)))))
+             (is (= (shrink-and-trap-errors g (lambda (x) (< x 9))) 9)))))
     (let ((g (generator (integer * 8))))
       (loop for i from 1 to 100
          do
            (progn
              (generate g)
-             (is (= (shrink g (lambda (x) (> x 10))) 0))
+             (is (= (shrink-and-trap-errors g (lambda (x) (> x 10))) 0))
              (loop for try = (generate g)
                 until (<= (cached-value g) 3))
-             (is (= (shrink g (lambda (x) (> x 3))) 0))
+             (is (= (shrink-and-trap-errors g (lambda (x) (> x 3))) 0))
              (loop for try = (generate g)
                 until (<= (cached-value g) -3))
-             (is (= (shrink g (lambda (x) (> x -3))) -3)))))
+             (is (= (shrink-and-trap-errors g (lambda (x) (> x -3))) -3)))))
     (let ((g (generator (integer 5 9))))
       (loop for i from 1 to 100
          do
            (progn
              (generate g)
-             (is (= (shrink g (lambda (x) (< x 3))) 5))
+             (is (= (shrink-and-trap-errors g (lambda (x) (< x 3))) 5))
              (loop for try = (generate g)
                 until (>= (cached-value g) 6))
-             (is (= (shrink g (lambda (x) (< x 6))) 6)))))))
+             (is (= (shrink-and-trap-errors g (lambda (x) (< x 6))) 6)))))))
 
 (deftest test-tuple-generator-shrink ()
   (let ((g (generator (tuple (integer) (integer) (integer)))))
@@ -142,7 +153,7 @@
        do
          (progn
            (generate g)
-           (is (equal (shrink g (constantly nil))
+           (is (equal (shrink-and-trap-errors g (constantly nil))
                       (list 0 0 0))))))
   (let ((g (generator (tuple
                        (guard #'greater-than-5 (integer))
@@ -153,7 +164,7 @@
          (progn
            (generate g)
            (is (every (lambda (x) (= (abs x) 6))
-                      (shrink g #'tuple-tester))))))
+                      (shrink-and-trap-errors g #'tuple-tester))))))
   (let ((g (generator (tuple (integer 6)
                              (integer 6)
                              (integer 6)))))
@@ -162,7 +173,7 @@
          (progn
            (generate g)
            (is (every (lambda (x) (= (abs x) 6))
-                      (shrink g #'tuple-tester)))))))
+                      (shrink-and-trap-errors g #'tuple-tester)))))))
 
 (deftest test-list-generator-bounds ()
   (let ((min-g (generator (integer 0)))
@@ -198,7 +209,7 @@
        do
          (progn
            (generate g)
-           (shrink g #'list-tester)
+           (shrink-and-trap-errors g #'list-tester)
            (is (and (= (length (cached-value g)) 6)
                     (every (lambda (x) (= (abs x) 6)) (cached-value g))))))))
 
@@ -209,7 +220,7 @@
        do
          (progn
            (generate g)
-           (shrink g (lambda (s) (> 5 (length s))))
+           (shrink-and-trap-errors g (lambda (s) (> 5 (length s))))
            (is (= (length (cached-value g)) 6))))))
 
 (deftest test-struct-generator-shrink ()
@@ -220,7 +231,7 @@
        do
          (progn
            (generate g)
-           (shrink g (lambda (x)
+           (shrink-and-trap-errors g (lambda (x)
                        (or (< (abs (a-struct-a-slot x)) 5)
                            (< (abs (a-struct-another-slot x)) 5))))
            (is (and (= (abs (a-struct-a-slot (cached-value g))) 6)
@@ -237,7 +248,7 @@
          (progn
            (loop for try = (generate g)
               until (>= (cached-value g) 15))
-           (is (= (shrink g (constantly nil)) 15))))))
+           (is (= (shrink-and-trap-errors g (constantly nil)) 15))))))
 
 (def-generator derp ()
   (generator (or (integer) (derp))))
@@ -259,7 +270,7 @@
        do
          (progn
            (generate g)
-           (is (= (shrink g #'int-tester) 10))))))
+           (is (= (shrink-and-trap-errors g #'int-tester) 10))))))
 
 (deftest test-check-it ()
   (let ((*num-trials* 50))
@@ -283,7 +294,7 @@
        collect
          (progn
            (generate g)
-           (is (<= 10 (length (shrink g (lambda (x) (= (length x) 5)))) 12))))
+           (is (<= 10 (length (shrink-and-trap-errors g (lambda (x) (= (length x) 5)))) 12))))
     (is (check-it g
                   (lambda (x) (<= 10 (length x) 20))
                   :examples (list (iota 10) (iota 20))))))
@@ -295,4 +306,4 @@
          do
          (progn
            (generate g)
-           (is (equal (shrink g (constantly nil)) '((3 3 3) (3 3))))))))
+           (is (equal (shrink-and-trap-errors g (constantly nil)) '((3 3 3) (3 3))))))))

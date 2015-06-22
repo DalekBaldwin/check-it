@@ -1,5 +1,11 @@
 (in-package :check-it)
 
+(defun success (result)
+  (and result (not (errored result))))
+
+(defun shrink-and-trap-errors (value test)
+  (shrink value (wrap-test-for-shrinking test)))
+
 (defgeneric shrink (value test))
 
 (defmethod shrink (value test)
@@ -22,13 +28,11 @@
          (let ((shrunk-elem
                 (shrink (slot-value value slot-name)
                         (lambda (x)
-                          (handler-case
-                              (funcall test
-                                       (let ((test-struct
-                                              (copy-structure value)))
-                                         (setf (slot-value test-struct slot-name) x)
-                                         test-struct))
-                            (error () nil))))))
+                          (funcall test
+                                   (let ((test-struct
+                                          (copy-structure value)))
+                                     (setf (slot-value test-struct slot-name) x)
+                                     test-struct))))))
            (setf (slot-value value slot-name) shrunk-elem))))
   value)
 
@@ -58,7 +62,7 @@
                            (1 (1+ test-value))
                            (-1 (1- test-value)))
                          test big best)))
-                 ;;failure; search toward zero
+                   ;;failure; search toward zero
                    (t
                     (shrink-int small test test-value test-value))))))))
 
@@ -80,12 +84,10 @@
                                (lambda (x)
                                  ;; test if elem can be replaced with a
                                  ;; particular value and still fail
-                                 (handler-case
-                                     (funcall test
-                                              (let ((test-list (copy-list value)))
-                                                (setf (nth i test-list) x)
-                                                test-list))
-                                   (error () nil))))))
+                                 (funcall test
+                                          (let ((test-list (copy-list value)))
+                                            (setf (nth i test-list) x)
+                                            test-list))))))
                   ;; now actually replace it with the best value
                   (setf (nth i value) shrunk-elem)))
            value))
@@ -175,13 +177,11 @@ that of the alternative that was originally tried."
                                  (lambda (x)
                                    ;; test if elem can be replaced with a
                                    ;; particular value and still fail
-                                   (handler-case
-                                       (funcall test
-                                                (let ((test-list
-                                                       (copy-list cached-value)))
-                                                  (setf (nth i test-list) x)
-                                                  test-list))
-                                     (error () nil))))))
+                                   (funcall test
+                                            (let ((test-list
+                                                   (copy-list cached-value)))
+                                              (setf (nth i test-list) x)
+                                              test-list))))))
                     ;; now actually replace it with the best value
                     (setf (nth i cached-value) shrunk-elem)))
              cached-value))
@@ -218,13 +218,11 @@ that of the alternative that was originally tried."
          (let ((shrunk-elem
                 (shrink sub-generator
                         (lambda (x)
-                          (handler-case
-                              (funcall test
-                                       (let ((test-tuple
-                                              (copy-list cached-value)))
-                                         (setf (nth i test-tuple) x)
-                                         test-tuple))
-                            (error () nil))))))
+                          (funcall test
+                                   (let ((test-tuple
+                                          (copy-list cached-value)))
+                                     (setf (nth i test-tuple) x)
+                                     test-tuple))))))
            (setf (nth i cached-value) shrunk-elem)))
     cached-value))
 
@@ -244,13 +242,11 @@ that of the alternative that was originally tried."
            (let ((shrunk-elem
                   (shrink gen
                           (lambda (x)
-                            (handler-case
-                                (funcall test
-                                         (let ((test-struct
-                                                (copy-structure cached-value)))
-                                           (setf (slot-value test-struct name) x)
-                                           test-struct))
-                              (error () nil))))))
+                            (funcall test
+                                     (let ((test-struct
+                                            (copy-structure cached-value)))
+                                       (setf (slot-value test-struct name) x)
+                                       test-struct))))))
              (setf (slot-value struct name) shrunk-elem)))
       (setf cached-value struct))))
 

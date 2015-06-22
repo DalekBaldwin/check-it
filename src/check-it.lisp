@@ -1,5 +1,10 @@
 (in-package :check-it)
 
+(defclass reified-error ()
+  ((wrapped-error
+    :initarg :wrapped-error
+    :accessor wrapped-error)))
+
 (defmacro regression-case (&key name datum timestamp)
   `(regression-case% ',name ,datum ,timestamp))
 
@@ -41,6 +46,23 @@
          *package-regression-files*)
         regression-file))
 
+(defgeneric errored (result)
+  (:method (result) nil)
+  (:method ((result reified-error)) t))
+
+(defun wrap-test-for-error-reporting (test)
+  (lambda (arg)
+    (handler-case
+        (funcall test arg)
+      (error (c)
+        (make-instance 'reified-error c)))))
+
+(defun wrap-test-for-shrinking (test)
+  (lambda (arg)
+    (handler-case
+        (funcall test arg)
+      (error (c) nil))))
+
 (defun check-it% (test-form generator test
                   &key
                     examples
@@ -50,49 +72,83 @@
                                        (gethash
                                         (symbol-package regression-id)
                                         *package-regression-files*))))
-  (block trial-run
-    (loop for example in examples
-       do
-         (let ((passed (funcall test example)))
-           (unless passed
-             (format *check-it-output* "~&Test ~A failed on example arg ~A~%"
-                     test-form
-                     example)
-             (return-from trial-run nil))))
-    (when regression-id
-      (loop for regression-case in (get regression-id 'regression-cases)
+  (let ((error-reporting-test
+         (wrap-test-for-error-reporting test))
+        (shrink-test
+         (wrap-test-for-shrinking test)))
+    (block trial-run
+      (loop for example in examples
          do
-           (let ((passed (funcall test regression-case)))
-             (unless passed
-               (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
-                       test-form
-                       regression-id
-                       regression-case)
-               (return-from trial-run nil)))))
-    (let ((*random-state* (make-random-state random-state)))
-      (loop repeat *num-trials*
-         do
-           (progn
-             (generate generator)
-             (let ((passed (funcall test (cached-value generator))))
-               (unless passed
-                 (format *check-it-output*
-                         "~&Test ~A ~A failed with random state:~%~S~%with arg ~A~%"
-                         test-form
-                         test
-                         *random-state*
-                         (cached-value generator))
-                 (let ((shrunk (shrink generator test)))
-                   (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
-                   (when regression-file
-                     (push shrunk (get regression-id 'regression-cases))
-                     (with-open-file (s regression-file
-                                        :direction :output
-                                        :if-exists :append
-                                        :if-does-not-exist :error)
-                       (format s "~&~S~%" (write-regression-case regression-id shrunk)))))
-                 (return-from trial-run nil))))))
-    (return-from trial-run t)))
+           (let ((result (funcall error-reporting-test example)))
+             ;; to-do: DRY this up
+             (cond
+               ((null result)
+                (format *check-it-output* "~&Test ~A failed on example arg ~A~%"
+                        test-form
+                        example)
+                (return-from trial-run nil))
+               ((errored result)
+                (format *check-it-output* "~&Test ~A signaled error ~A on example arg ~A~%"
+                        test-form
+                        (wrapped-error result)
+                        example)
+                (return-from trial-run nil)))))
+      (when regression-id
+        (loop for regression-case in (get regression-id 'regression-cases)
+           do
+             (let ((result (funcall error-reporting-test regression-case)))
+               (cond
+                 ((null result)
+                  (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
+                          test-form
+                          regression-id
+                          regression-case)
+                  (return-from trial-run nil))
+                 ((errored result)
+                  (format *check-it-output* "~&Test ~A signaled error ~A on regression ~A with arg ~A~%"
+                          test-form
+                          (wrapped-error result)
+                          regression-id
+                          regression-case)
+                  (return-from trial-run nil))))))
+      (let ((*random-state* (make-random-state random-state)))
+        (loop repeat *num-trials*
+           do
+             (progn
+               (generate generator)
+               (let ((result (funcall error-reporting-test (cached-value generator))))
+                 (flet ((do-shrink ()
+                          (let ((shrunk (shrink generator shrink-test)))
+                            (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
+                            (when regression-file
+                              (push shrunk (get regression-id 'regression-cases))
+                              (with-open-file (s regression-file
+                                                 :direction :output
+                                                 :if-exists :append
+                                                 :if-does-not-exist :error)
+                                (format s "~&~S~%"
+                                        (write-regression-case regression-id shrunk)))))))
+                   (cond
+                     ((null result)
+                      (format *check-it-output*
+                              "~&Test ~A ~A failed with random state:~%~S~%with arg ~A~%"
+                              test-form
+                              test
+                              *random-state*
+                              (cached-value generator))
+                      (do-shrink)
+                      (return-from trial-run nil))
+                     ((errored result)
+                      (format *check-it-output*
+                              "~&Test ~A ~A signaled error ~A with random state:~%~S~%with arg ~A~%"
+                              test-form
+                              test
+                              (wrapped-error result)
+                              *random-state*
+                              (cached-value generator))
+                      (do-shrink)
+                      (return-from trial-run nil))))))))
+      (return-from trial-run t))))
 
 (defmacro check-it (generator test
                     &key
