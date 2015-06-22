@@ -288,14 +288,13 @@
         (g (generator (integer))))
     (is (check-it g
                   (lambda (x)
+                    (declare (ignore x))
                     (handler-case
                         (progn
                           (error 'test-error)
                           nil)
                       (test-error ()
                         t)))))))
-
-
 
 (deftest test-chained-generator ()
   (let ((*list-size* 100)
