@@ -590,7 +590,7 @@
                   required
                   (mapcar #'first optional)
                   (when rest (list rest))
-                  (mapcar #'cdar keys)
+                  (mapcar #'cadar keys)
                   (mapcar #'first aux))))
       `(eval-when (:compile-toplevel :load-toplevel :execute)
          (defclass ,name (custom-generator)
