@@ -122,6 +122,9 @@
     (setf cached-value (shrink cached-value
                                (funcall shrinker-predicate test)))))
 
+(defmethod shrink ((value char-generator) test)
+  (cached-value value))
+
 (defmethod shrink ((value real-generator) test)
   (declare (ignore test))
   ;; can't shrink over non-discrete search space

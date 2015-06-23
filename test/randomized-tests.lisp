@@ -214,6 +214,11 @@
            (is (and (= (length (cached-value g)) 6)
                     (every (lambda (x) (= (abs x) 6)) (cached-value g))))))))
 
+(deftest test-char-generator-shrink ()
+  (let ((g (generator (character #\c #\q))))
+    (is (eql (generate g)
+             (shrink g (constantly nil))))))
+
 (deftest test-string-generator-shrink ()
   (let ((g (generator (guard (lambda (s) (> (length s) 5))
                              (string)))))
