@@ -570,11 +570,7 @@
         (case (get (first exp) 'genex-type)
           (generator
            (let* ((gen-name (first exp)))
-             `(make-instance ',gen-name
-                             ,@(loop for arg in (rest exp)
-                                  for param in (get (first exp) 'generator-params)
-                                  collect param
-                                  collect arg))))
+             `(funcall ,(get gen-name 'generator-form) ,@(rest exp))))
           (macro
            (expand-generator
             (funcall (get (first exp) 'genex-macro)
@@ -587,26 +583,39 @@
   (expand-generator exp))
 
 (defmacro def-generator (name params &body body)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defclass ,name (custom-generator)
-       ((bias
-         :initform 1.0
-         :accessor bias
-         :allocation :class)
-        ,@(loop for param in params
-             collect `(,param
-                       :initarg ,(make-keyword param)))))
-     (setf (get ',name 'genex-type) 'generator)
-     (setf (get ',name 'generator-params)
-           (list ,@(mapcar #'make-keyword params)))
-     (defmethod generate ((generator ,name))
-       (generate
-        (if (slot-boundp generator 'sub-generator)
-            (sub-generator generator)
-            (setf (sub-generator generator)
-                  (let (,@(loop for param in params
-                             collect `(,param (slot-value generator ',param))))
-                    ,@body)))))))
+  (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
+      (parse-ordinary-lambda-list params)
+    (declare (ignore allow-other-keys keyp))
+    (let ((slots (append
+                  required
+                  (mapcar #'first optional)
+                  (when rest (list rest))
+                  (mapcar #'cdar keys)
+                  (mapcar #'first aux))))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (defclass ,name (custom-generator)
+           ((bias
+             :initform 1.0
+             :accessor bias
+             :allocation :class)
+            ,@(loop for slot in slots
+                 collect `(,slot
+                           :initarg ,(make-keyword slot)))))
+         (setf (get ',name 'genex-type) 'generator)
+         (setf (get ',name 'generator-form)
+               `(lambda ,',params
+                  (make-instance ',',name
+                                 ,@',(loop for slot in slots
+                                        collect (make-keyword slot)
+                                        collect slot))))
+         (defmethod generate ((generator ,name))
+           (generate
+            (if (slot-boundp generator 'sub-generator)
+                (sub-generator generator)
+                (setf (sub-generator generator)
+                      (let (,@(loop for slot in slots
+                                 collect `(,slot (slot-value generator ',slot))))
+                        ,@body)))))))))
 
 (defmacro destructuring-lambda (params &body body)
   (with-gensyms (shallow-params)
