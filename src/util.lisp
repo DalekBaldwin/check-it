@@ -6,6 +6,16 @@
        (destructuring-bind (,params) ,shallow-params
          ,@body))))
 
+(defun extract-params-from-lambda-list (lambda-list)
+  (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
+      (parse-ordinary-lambda-list lambda-list)
+    (declare (ignore allow-other-keys keyp))
+    (append required
+            (mapcar #'first optional)
+            (when rest (list rest))
+            (mapcar #'cadar keys)
+            (mapcar #'first aux))))
+
 (defmacro with-obvious-accessors (accessors instance &body body)
   "Like WITH-ACCESSORS but with the brevity of WITH-SLOTS."
   `(with-accessors

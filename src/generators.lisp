@@ -582,16 +582,6 @@
 (defmacro generator (exp)
   (expand-generator exp))
 
-(defun extract-params-from-lambda-list (lambda-list)
-  (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
-      (parse-ordinary-lambda-list lambda-list)
-    (declare (ignore allow-other-keys keyp))
-    (append required
-            (mapcar #'first optional)
-            (when rest (list rest))
-            (mapcar #'cadar keys)
-            (mapcar #'first aux))))
-
 (defmacro def-generator (name lambda-list &body body)
   (let ((slots (extract-params-from-lambda-list lambda-list)))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
