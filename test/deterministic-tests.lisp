@@ -38,3 +38,22 @@
                               :another-slot j)
                              #'struct-tester)
                      test-struct)))))
+
+(deftest test-extract-params-from-lambda-list ()
+  (let ((cases
+         '(((a) (a))
+           ((&optional a) (a))
+           ((&rest a) (a))
+           ((&key a) (a))
+           ((&aux a) (a))
+           ((a &optional b &rest c &key d &aux e) (a b c d e))
+           ((&optional a (b 1) (c 2 c-supplied)) (a b c))
+           ((&key a (b 1) (c 2 c-supplied) ((:d d)) ((:e e) 3) ((:f f) 4 f-supplied))
+            (a b c d e f))
+           ((&aux a (b 1)) (a b)))))
+    (loop for case in cases
+       do
+         (progn
+           (is (equal (check-it::extract-params-from-lambda-list
+                       (first case))
+                      (second case)))))))

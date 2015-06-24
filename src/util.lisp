@@ -1,5 +1,11 @@
 (in-package :check-it)
 
+(defmacro destructuring-lambda (params &body body)
+  (with-gensyms (shallow-params)
+    `(lambda (&rest ,shallow-params)
+       (destructuring-bind (,params) ,shallow-params
+         ,@body))))
+
 (defmacro with-obvious-accessors (accessors instance &body body)
   "Like WITH-ACCESSORS but with the brevity of WITH-SLOTS."
   `(with-accessors

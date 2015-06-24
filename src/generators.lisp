@@ -582,46 +582,42 @@
 (defmacro generator (exp)
   (expand-generator exp))
 
-(defmacro def-generator (name params &body body)
+(defun extract-params-from-lambda-list (lambda-list)
   (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
-      (parse-ordinary-lambda-list params)
+      (parse-ordinary-lambda-list lambda-list)
     (declare (ignore allow-other-keys keyp))
-    (let ((slots (append
-                  required
-                  (mapcar #'first optional)
-                  (when rest (list rest))
-                  (mapcar #'cadar keys)
-                  (mapcar #'first aux))))
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (defclass ,name (custom-generator)
-           ((bias
-             :initform 1.0
-             :accessor bias
-             :allocation :class)
-            ,@(loop for slot in slots
-                 collect `(,slot
-                           :initarg ,(make-keyword slot)))))
-         (setf (get ',name 'genex-type) 'generator)
-         (setf (get ',name 'generator-form)
-               `(lambda ,',params
-                  (make-instance ',',name
-                                 ,@',(loop for slot in slots
-                                        collect (make-keyword slot)
-                                        collect slot))))
-         (defmethod generate ((generator ,name))
-           (generate
-            (if (slot-boundp generator 'sub-generator)
-                (sub-generator generator)
-                (setf (sub-generator generator)
-                      (let (,@(loop for slot in slots
-                                 collect `(,slot (slot-value generator ',slot))))
-                        ,@body)))))))))
+    (append required
+            (mapcar #'first optional)
+            (when rest (list rest))
+            (mapcar #'cadar keys)
+            (mapcar #'first aux))))
 
-(defmacro destructuring-lambda (params &body body)
-  (with-gensyms (shallow-params)
-    `(lambda (&rest ,shallow-params)
-       (destructuring-bind (,params) ,shallow-params
-         ,@body))))
+(defmacro def-generator (name lambda-list &body body)
+  (let ((slots (extract-params-from-lambda-list lambda-list)))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defclass ,name (custom-generator)
+         ((bias
+           :initform 1.0
+           :accessor bias
+           :allocation :class)
+          ,@(loop for slot in slots
+               collect `(,slot
+                         :initarg ,(make-keyword slot)))))
+       (setf (get ',name 'genex-type) 'generator)
+       (setf (get ',name 'generator-form)
+             `(lambda ,',lambda-list
+                (make-instance ',',name
+                               ,@',(loop for slot in slots
+                                      collect (make-keyword slot)
+                                      collect slot))))
+       (defmethod generate ((generator ,name))
+         (generate
+          (if (slot-boundp generator 'sub-generator)
+              (sub-generator generator)
+              (setf (sub-generator generator)
+                    (let (,@(loop for slot in slots
+                               collect `(,slot (slot-value generator ',slot))))
+                      ,@body))))))))
 
 (defmacro def-genex-macro (name lambda-list &body body)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
