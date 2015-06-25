@@ -314,7 +314,7 @@
               collect (length (generate g)))))
       (is (<= 10 (apply #'min lengths) (apply #'max lengths) 20)))
     (loop for i from 1 to 20
-       collect
+       do
          (progn
            (generate g)
            (is (<= 10 (length (shrink-and-trap-errors g (lambda (x) (= (length x) 5)))) 12))))
@@ -322,11 +322,60 @@
       (is
        (check-it g
                  (lambda (x) (<= 10 (length x) 20))
-                 :examples (list (iota 10) (iota 20)))))))
+                 :examples (list (iota 10) (iota 20))))))
+  (let ((*list-size* 100)
+        (*size* 100)
+        (g (generator
+            (chain ((x (integer 10 20))
+                    (y (integer 30 40)))
+              (generator (list (integer x y) :min-length x :max-length y))))))
+    (loop for i from 1 to 50
+       collect
+         (progn
+           (generate g)
+           (let ((min (apply #'min (mapcar #'cached-value
+                                           (check-it::sub-generators
+                                            (cached-generator g)))))
+                 (max (apply #'max (mapcar #'cached-value
+                                           (check-it::sub-generators
+                                            (cached-generator g))))))
+             (is (<= (check-it::min-length (cached-generator g))
+                     min
+                     max
+                     (check-it::max-length (cached-generator g))))
+             (shrink g (constantly nil))
+             (let ((min (apply #'min (mapcar #'cached-value
+                                             (check-it::sub-generators
+                                              (cached-generator g)))))
+                   (max (apply #'max (mapcar #'cached-value
+                                             (check-it::sub-generators
+                                              (cached-generator g))))))
+               (is (= (check-it::min-length (cached-generator g))
+                      min
+                      max)))))))
+  (let ((*list-size* 100)
+        (*size* 100)
+        (g (generator
+            (list
+             (chain ((x (integer 10 20))
+                     (y (integer 21 30)))
+               (generator (list (integer x y) :min-length x :max-length y)))
+             :min-length 5 :max-length 10))))
+    (loop for i from 1 to 50
+       do
+         (progn
+           (generate g)
+           (shrink g (constantly nil))
+           (is
+            (and (= (length (cached-value g)) 5)
+                 (every (lambda (x)
+                          (mapcar #'= (list* (length x) x)))
+                        (cached-value g))))))))
 
 (deftest test-mapped-generator-shrink ()
-  (let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
-                             (map (lambda (x) (list x x)) (integer 3 20))))))
+  (let ((*size* 100)
+        (g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 50))
+                             (map (lambda (x) (list x x)) (integer 3 50))))))
     (loop for i from 1 to 10
          do
          (progn
