@@ -47,9 +47,9 @@
            ((&key a) (a))
            ((&aux a) (a))
            ((a &optional b &rest c &key d &aux e) (a b c d e))
-           ((&optional a (b 1) (c 2 c-supplied)) (a b c))
-           ((&key a (b 1) (c 2 c-supplied) ((:d d)) ((:e e) 3) ((:f f) 4 f-supplied))
-            (a b c d e f))
+           ((&optional a (b) (c 1) (d 2 d-supplied)) (a b c d))
+           ((&key a (b) (c 1) (d 2 c-supplied) ((:e e)) ((:f f) 3) ((:g g) 4 g-supplied))
+            (a b c d e f g))
            ((&aux a (b 1)) (a b)))))
     (loop for case in cases
        do
