@@ -334,7 +334,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
            (code-char (+ (random (- (1+ top-char) new-low)) new-low)))))
       (_
        (lambda ()
-         (let ((new-high (min high 128))
+         (let ((new-high (min high top-char))
                (new-low (max low 0)))
            (code-char (+ (random (1+ (- new-high new-low))) new-low))))))))
 
