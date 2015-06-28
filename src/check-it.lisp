@@ -31,6 +31,7 @@
    (get name 'regression-cases)))
 
 (defun write-regression-case (name datum)
+  "Produce code for a regression case to be written to a file."
   `(regression-case
     :name ,name
     :datum ,(format nil "~S" datum)
@@ -41,6 +42,7 @@
 (defparameter *package-regression-files* (make-hash-table))
 
 (defun register-package-regression-file (package regression-file)
+  "Register a file to be used for saving all regression cases for a package."
   (setf (gethash
          (find-package package)
          *package-regression-files*)
@@ -51,6 +53,7 @@
   (:method ((result reified-error)) t))
 
 (defun wrap-test-for-error-reporting (test)
+  "Return a function capturing unhandled errors in TEST as data."
   (lambda (arg)
     (handler-case
         (funcall test arg)
@@ -58,6 +61,7 @@
         (make-instance 'reified-error :wrapped-error c)))))
 
 (defun wrap-test-for-shrinking (test)
+  "Return a function treating unhandled errors in TEST as failures."
   (lambda (arg)
     (handler-case
         (funcall test arg)
@@ -156,6 +160,7 @@
                       (random-state t random-state-supplied)
                       (regression-id nil regression-id-supplied)
                       (regression-file nil regression-file-supplied))
+  "Macro for performing a randomized test run."
   `(check-it% ',test ,generator ,test
               :examples ,examples
               ,@(when random-state-supplied `(:random-state ,random-state))

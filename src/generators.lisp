@@ -190,7 +190,9 @@
     :initform 0
     :accessor recursive-depth)))
 
-(defgeneric generate (generator))
+(defgeneric generate (generator)
+  (:documentation
+   "Produce and cache a random value from a generator object."))
 
 (defmethod generate (generator)
   "Treat non-generators as constants."
@@ -249,6 +251,9 @@
     (/ (random most-positive-fixnum) double-float-most-positive-fixnum)))
 
 (defun choose-generator (generators)
+  "Make a weighted choice to pick one of a number of generators.
+This function, along with COMPUTE-WEIGHTS, uses an algorithm that basically
+generalizes a sigmoidal probabilistic activation function from 2 to N possible outputs."
   (let* ((len (length generators))
          (total-bias (loop for generator in generators
                         sum (bias generator)))
@@ -277,6 +282,7 @@
     (generate chosen-generator)))
 
 (defun int-generator-function (low high)
+  "Return a function for producing random integers uniformly with appropriate bounds."
   (match (cons low high)
     ((cons '* '*)
      (lambda () (- (random (+ *size* *size* 1)) *size*)))
@@ -294,6 +300,7 @@
          (+ (random (- (1+ new-high) new-low)) new-low))))))
 
 (defun real-generator-function (low high)
+  "Return a function for producing random reals uniformly with appropriate bounds."
   (match (cons low high)
     ((cons '* '*)
      (lambda () (- (random (float (* 2 *size*))) *size*)))
@@ -313,6 +320,7 @@
 
 (let ((top-char 127))
   (defun char-generator-function (low high)
+    "Return a function for producing random chars uniformly with appropriate bounds."
     (match (cons low high)
       ((cons '* '*)
        (lambda () (code-char (random (1+ top-char)))))
@@ -331,6 +339,7 @@
            (code-char (+ (random (1+ (- new-high new-low))) new-low))))))))
 
 (defun int-shrinker-predicate (low high)
+  "Return a function for testing the validity of shrunking integers with appropriate bounds."
   (match (cons low high)
     ((cons '* '*)
      (lambda (test) (lambda (x) (funcall test x))))
@@ -580,9 +589,11 @@
     (t exp)))
 
 (defmacro generator (exp)
+  "Macro to establish the beginning of a section of code in the generator DSL."
   (expand-generator exp))
 
 (defmacro def-generator (name lambda-list &body body)
+  "Define a new, possibly recursive, generator type."
   (let ((slots (extract-params-from-lambda-list lambda-list)))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,name (custom-generator)
@@ -610,6 +621,7 @@
                       ,@body))))))))
 
 (defmacro def-genex-macro (name lambda-list &body body)
+  "Define a code template to expand wherever a generator expression could appear."
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf (get ',name 'genex-type) 'macro)
      (setf (get ',name 'genex-macro)

@@ -6,7 +6,9 @@
 (defun shrink-and-trap-errors (value test)
   (shrink value (wrap-test-for-shrinking test)))
 
-(defgeneric shrink (value test))
+(defgeneric shrink (value test)
+  (:documentation
+   "Find a simpler value that fails the TEST."))
 
 (defmethod shrink (value test)
   (declare (ignore test))

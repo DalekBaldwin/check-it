@@ -1,12 +1,14 @@
 (in-package :check-it)
 
 (defmacro destructuring-lambda (params &body body)
+  "Pass the arguments of a destructuring lambda list to a function body."
   (with-gensyms (shallow-params)
     `(lambda (&rest ,shallow-params)
        (destructuring-bind (,params) ,shallow-params
          ,@body))))
 
 (defun extract-params-from-lambda-list (lambda-list)
+  "Return a list of the names of all parameters in an ordinary lambda list."
   (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
       (parse-ordinary-lambda-list lambda-list)
     (declare (ignore allow-other-keys keyp))
