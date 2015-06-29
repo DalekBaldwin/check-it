@@ -21,6 +21,7 @@ The basic idea behind QuickCheck-style tools is simple, but they become complica
   * [Checking](#checking)
     * [Regression Cases](#regression-cases)
   * [Shrinking](#shrinking)
+    * [Note on Destructive Operations](#note-on-destructive-operations)
 
 ## Generating
 
@@ -339,3 +340,7 @@ Other generators shrink by recursively shrinking their subgenerators while still
 For mapped generators, the subgenerator shrinks according to its own internal degrees of freedom, but the mapping is applied to each candidate for the subgenerator's shrunken values to determine whether entire composite data structure still fails the test. There's a bit of a thorny issue here in that check-it doesn't know for sure whether a simpler value in the subgenerator will really correspond to a simpler value after the mapping is applied. For this reason, good mapping functions should typically be injective.
 
 For chained generators, the parameterizers are not involved in the shrinking process; the parameterized generator is shrunk according to the parameters it had when it failed the test.
+
+### Note on Destructive Operations
+
+Currently, generators cache their generated values and often make use of them during the shrinking process. If you perform destructive operations on the input to a test function, shrinking may not work correctly. This will be fixed eventually.
