@@ -382,17 +382,6 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
   (mapcar #'slot-definition-name
           (closer-mop:class-slots (find-class struct-type))))
 
-(defun make-struct-from-type (type-name)
-  #-(or abcl allegro)
-  (make-instance type-name)
-  #+(or abcl allegro)
-  (with-input-from-string
-      (s (format nil "(~A::~A)"
-                 (package-name (symbol-package type-name))
-                 (symbol-name type-name)))
-    (funcall (get-dispatch-macro-character #\# #\S)
-             s #\S nil)))
-
 (defmethod generate ((generator struct-generator))
   (let* ((struct (make-struct-from-type (struct-type generator))))
     (loop for name in (slot-names generator)

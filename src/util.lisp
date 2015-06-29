@@ -34,3 +34,14 @@
                    (concatenate 'string str (princ-to-string char)))
                  (rest char-list)
                  :initial-value (princ-to-string (first char-list)))))
+
+(defun make-struct-from-type (type-name)
+  #-(or abcl allegro)
+  (make-instance type-name)
+  #+(or abcl allegro)
+  (with-input-from-string
+      (s (format nil "(~A::~A)"
+                 (package-name (symbol-package type-name))
+                 (symbol-name type-name)))
+    (funcall (get-dispatch-macro-character #\# #\S)
+             s #\S nil)))
