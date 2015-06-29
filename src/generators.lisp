@@ -339,7 +339,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
            (code-char (+ (random (1+ (- new-high new-low))) new-low))))))))
 
 (defun int-shrinker-predicate (low high)
-  "Return a function for testing the validity of shrunking integers with appropriate bounds."
+  "Return a function for testing the validity of shrinking integers with appropriate bounds."
   (match (cons low high)
     ((cons '* '*)
      (lambda (test) (lambda (x) (funcall test x))))
