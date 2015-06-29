@@ -382,8 +382,10 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
   (mapcar #'slot-definition-name
           (closer-mop:class-slots (find-class struct-type))))
 
-#+(or abcl allegro)
 (defun make-struct-from-type (type-name)
+  #-(or abcl allegro)
+  (make-instance type-name)
+  #+(or abcl allegro)
   (with-input-from-string
       (s (format nil "(~A::~A)"
                  (package-name (symbol-package type-name))
@@ -392,11 +394,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
              s #\S nil)))
 
 (defmethod generate ((generator struct-generator))
-  (let* ((struct
-          #-(or abcl allegro)
-          (make-instance (struct-type generator))
-          #+(or abcl allegro)
-          (make-struct-from-type (struct-type generator))))
+  (let* ((struct (make-struct-from-type (struct-type generator))))
     (loop for name in (slot-names generator)
        for gen in (slot-generators generator)
        do (setf (slot-value struct name)
@@ -518,7 +516,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
             :generator-function (lambda () ,(expand-generator sub-generator))
             ,@keys)))
        (string
-        `(make-instance 'string-generator))
+        `(make-instance 'string-generator ,@(rest exp)))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)

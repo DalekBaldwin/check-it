@@ -236,11 +236,7 @@ that of the alternative that was originally tried."
                            struct-type
                            slot-names
                            slot-generators) value
-    (let ((struct
-           #-(or abcl allegro)
-           (make-instance struct-type)
-           #+(or abcl allegro)
-           (make-struct-from-type struct-type)))
+    (let ((struct (make-struct-from-type struct-type)))
       (loop for name in slot-names
          for gen in slot-generators
          do
