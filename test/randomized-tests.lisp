@@ -381,3 +381,94 @@
          (progn
            (generate g)
            (is (equal (shrink-and-trap-errors g (constantly nil)) '((3 3 3) (3 3))))))))
+
+(deftest test-int-generator-regenerate ()
+  (let ((g (generator (integer))))
+    (loop repeat 10
+       do
+         (is (= (generate g) (regenerate g))))))
+
+(deftest test-real-generator-regenerate ()
+  (let ((g (generator (real))))
+    (loop repeat 10
+       do
+         (is (= (generate g) (regenerate g))))))
+
+(deftest test-char-generator-regenerate ()
+  (let ((g (generator (character))))
+    (loop repeat 10
+       do
+         (is (eql (generate g) (regenerate g))))))
+
+(deftest test-tuple-generator-regenerate ()
+  (let ((g (generator (tuple (integer) (integer) (integer)))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-list-generator-regenerate ()
+  (let ((g (generator (list (integer)))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-string-generator-regenerate ()
+  (let ((g (generator (string))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-struct-generator-regenerate ()
+  (let ((g (generator (struct a-struct
+                              :a-slot (integer)
+                              :another-slot (real)))))
+    (loop repeat 10
+       do
+         (is (equalp (generate g) (regenerate g))))))
+
+(deftest test-mapped-generator-regenerate ()
+  (let ((g (generator (map (lambda (x) (list x x x)) (list (integer))))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-chained-generator-regenerate ()
+  (let ((g (generator
+            (chain ((x (integer 10 20))
+                    (y (integer 21 30)))
+              (generator (list (integer x y) :min-length x :max-length y))))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-guard-generator-regenerate ()
+  (let ((g (generator
+            (guard (lambda (x) (> (length x) 1)) (list (integer))))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-or-generator-regenerate ()
+  (let ((g (generator
+            (or (list (integer))
+                (tuple (integer) (real))
+                (struct a-struct
+                        :a-slot (integer)
+                        :another-slot (real))))))
+    (loop repeat 10
+       do
+         (is (equalp (generate g) (regenerate g))))))
+
+(def-generator big-custom-generator ()
+  (generator
+   (or (list (integer) :min-length 2)
+       (tuple (integer) (real))
+       (struct a-struct
+               :a-slot (integer)
+               :another-slot (real)))))
+
+(deftest test-custom-generator-regenerate ()
+  (let ((g (generator (big-custom-generator))))
+    (loop repeat 10
+       do
+         (is (equalp (generate g) (regenerate g))))))

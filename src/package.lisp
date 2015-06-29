@@ -14,6 +14,8 @@
 
            #:generator
            #:generate
+           
+           #:regenerate
 
            #:int-generator
            #:real-generator
