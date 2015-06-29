@@ -22,19 +22,19 @@
      do
        (let ((*size* size))
          (let ((g (generator (integer * 2))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= (- *size*) (generate g) 2))))
          (let ((g (generator (integer -2 *))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= -2 (generate g) *size*))))
          (let ((g (generator (integer -2 2))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= -2 (generate g) 2))))
          (let ((g (generator (integer))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= (- *size*) (generate g) *size*)))))))
 
@@ -43,26 +43,26 @@
      do
        (let ((*size* size))
          (let ((g (generator (real * 2))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= (- *size*) (generate g) 2))))
          (let ((g (generator (real -2 *))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= -2 (generate g) *size*))))
          (let ((g (generator (real -2 2))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= -2 (generate g) 2))))
          (let ((g (generator (real))))
-           (loop for i from 1 to 100
+           (loop repeat 100
               do
                 (is (<= (- *size*) (generate g) *size*)))))))
 
 (deftest test-char-generate ()
   (loop for params in '((* *) (* 25) (25 *) (25 26))
      do (let ((g (generator (character (first params) (second params)))))
-          (loop for i from 1 to 100
+          (loop repeat 100
              do
                (is (<= (or (and (eq '* (first params)) 0) (first params))
                        (char-code (generate g))
@@ -72,7 +72,7 @@
   (loop for g in (list (generator (alpha))
                        (generator (alphanumeric)))
      do
-       (loop for i from 1 to 100
+       (loop repeat 100
           do
             (let ((random-char (generate g)))
               (is (or (<= 48 (char-code random-char) 57)
@@ -83,11 +83,11 @@
 
 (deftest test-int-generate-shrink ()
   (let ((g (generator (guard #'positive-integer-p (integer)))))
-    (loop for i from 1 to 100
+    (loop repeat 100
        do
          (is (= (shrink-and-trap-errors (generate g) (constantly nil)) 0))))
   (let ((g (generator (integer 1))))
-    (loop for i from 1 to 100
+    (loop repeat 100
        do
          (is (= (shrink-and-trap-errors (generate g) (constantly nil)) 0)))))
 
@@ -96,7 +96,7 @@
                               :a-slot (integer)
                               :another-slot (integer))))
         (test-struct (make-a-struct :a-slot 0 :another-slot 0)))
-    (loop for i from 1 to 10
+    (loop repeat 100
        do
          (is (equalp (shrink-and-trap-errors (generate g) (constantly nil))
                      test-struct)))))
@@ -106,7 +106,7 @@
 (deftest test-shrink-error ()
   ;; errors should be caught and treated as test failures in shrinking
   (let ((g (generator (integer))))
-    (loop for i from 1 to 30
+    (loop repeat 30
        do
          (progn
            (generate g)
@@ -118,7 +118,7 @@
 (deftest test-int-generator-shrink ()
   (let ((*size* 30))
     (let ((g (generator (integer 5))))
-      (loop for i from 1 to 100
+      (loop repeat 100
          do
            (progn
              (generate g)
@@ -127,7 +127,7 @@
                 until (>= (cached-value g) 9))
              (is (= (shrink-and-trap-errors g (lambda (x) (< x 9))) 9)))))
     (let ((g (generator (integer * 8))))
-      (loop for i from 1 to 100
+      (loop repeat 100
          do
            (progn
              (generate g)
@@ -139,7 +139,7 @@
                 until (<= (cached-value g) -3))
              (is (= (shrink-and-trap-errors g (lambda (x) (> x -3))) -3)))))
     (let ((g (generator (integer 5 9))))
-      (loop for i from 1 to 100
+      (loop repeat 100
          do
            (progn
              (generate g)
@@ -150,7 +150,7 @@
 
 (deftest test-tuple-generator-shrink ()
   (let ((g (generator (tuple (integer) (integer) (integer)))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -160,7 +160,7 @@
                        (guard #'greater-than-5 (integer))
                        (guard #'greater-than-5 (integer))
                        (guard #'greater-than-5 (integer))))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -169,7 +169,7 @@
   (let ((g (generator (tuple (integer 6)
                              (integer 6)
                              (integer 6)))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -179,7 +179,7 @@
 (deftest test-list-generator-bounds ()
   (let ((min-g (generator (integer 0)))
         (interval-g (generator (integer 1))))
-    (loop for i from 1 to 20
+    (loop repeat 20
        collect
          (progn
            (let* ((min (generate min-g))
@@ -190,7 +190,7 @@
                                     :max-length (+ min interval)))))
              (is (<= min (length (generate list-g)) (+ min interval)))))))
   (let ((bound-g (generator (integer 0))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        collect
          (progn
            (let* ((bound (generate bound-g))
@@ -206,7 +206,7 @@
                    (list
                     (guard #'greater-than-5
                            (integer)))))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -222,7 +222,7 @@
 (deftest test-string-generator-shrink ()
   (let ((g (generator (guard (lambda (s) (> (length s) 5))
                              (string)))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -233,7 +233,7 @@
   (let ((g (generator (struct a-struct
                               :a-slot (guard #'greater-than-5 (integer))
                               :another-slot (guard #'greater-than-5 (integer))))))
-    (loop for i from 1 to 10
+    (loop repeat 10
        do
          (progn
            (generate g)
@@ -249,7 +249,7 @@
         (g (generator (or
                        (integer 15 20)
                        (integer 5 10)))))
-    (loop for i from 1 to 100
+    (loop repeat 100
        do
          (progn
            (loop for try = (generate g)
@@ -262,7 +262,7 @@
 (deftest test-custom-generator ()
   (let ((g (generator (derp)))
         (*size* 10))
-    (loop for i from 1 to 20
+    (loop repeat 20
        do
          (is (<= -10 (generate g) 10)))))
 
@@ -272,7 +272,7 @@
 (deftest test-custom-generator-shrink ()
   (let ((g (generator (herp)))
         (*size* 20))
-    (loop for i from 1 to 20
+    (loop repeat 20
        do
          (progn
            (generate g)
@@ -310,10 +310,10 @@
                   (y (integer 18 20)))
             (generator (list (integer) :min-length x :max-length y))))))
     (let ((lengths
-           (loop for i from 1 to 50
+           (loop repeat 50
               collect (length (generate g)))))
       (is (<= 10 (apply #'min lengths) (apply #'max lengths) 20)))
-    (loop for i from 1 to 20
+    (loop repeat 20
        do
          (progn
            (generate g)
@@ -329,7 +329,7 @@
             (chain ((x (integer 10 20))
                     (y (integer 30 40)))
               (generator (list (integer x y) :min-length x :max-length y))))))
-    (loop for i from 1 to 50
+    (loop repeat 50
        collect
          (progn
            (generate g)
@@ -361,7 +361,7 @@
                      (y (integer 21 30)))
                (generator (list (integer x y) :min-length x :max-length y)))
              :min-length 5 :max-length 10))))
-    (loop for i from 1 to 50
+    (loop repeat 50
        do
          (progn
            (generate g)
@@ -376,7 +376,7 @@
   (let ((*size* 100)
         (g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 50))
                              (map (lambda (x) (list x x)) (integer 3 50))))))
-    (loop for i from 1 to 10
+    (loop repeat 10
          do
          (progn
            (generate g)
