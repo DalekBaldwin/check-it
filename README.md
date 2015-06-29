@@ -115,7 +115,7 @@ The `tuple` generator generates a list containing one result from each of its su
 A special form of the `list` generator (equally length bounded by `*list-size*`) is the `string` generator to generate strings consisting of randomly chosen alphanumeric characters.
 
 ```lisp
-(generate (generator (string)))
+(generate (generator (string :min-length 10 :max-length 20)))
 ;; sample output: "2k464h72CZ4TE1KQ"
 ```
 
