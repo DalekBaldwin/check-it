@@ -21,7 +21,7 @@ The basic idea behind QuickCheck-style tools is simple, but they become complica
     * [Generator Macros](#generator-macros)
   * [Checking](#checking)
     * [Regression Cases](#regression-cases)
-      * [Note on Mapped Generators)(#note-on-mapped-generators)
+      * [Note on Mapped Generators](#note-on-mapped-generators)
   * [Shrinking](#shrinking)
     * [Note on Destructive Operations](#note-on-destructive-operations)
 
