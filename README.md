@@ -11,6 +11,7 @@ The basic idea behind QuickCheck-style tools is simple, but they become complica
     * [Number Generators](#number-generators)
     * [Character Generators](#character-generators)
     * [List and Tuple Generators](#list-and-tuple-generators)
+    * [String Generator](#string-generator)
     * [Or Generator](#or-generator)
     * [Guard Generator](#guard-generator)
     * [Struct Generator](#struct-generator)
@@ -111,6 +112,8 @@ The `tuple` generator generates a list containing one result from each of its su
   (generate another-generator))
 ;; sample result: (-6 -4.168296)
 ```
+
+### String Generator
 
 A special form of the `list` generator (equally length bounded by `*list-size*`) is the `string` generator to generate strings consisting of randomly chosen alphanumeric characters.
 
