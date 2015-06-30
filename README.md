@@ -157,13 +157,18 @@ In order to use this kind of generator, the struct type must have a default cons
 
 ### Mapped Generators
 
-A mapped generator applies a transformation function to its subgenerator. This is a mapping in the mathematical sense, not the Lispy one; it does not map the function over a list. The transformation function should not mutate its argument.
+A mapped generator applies a transformation function to its subgenerators. This is a mapping in the mathematical sense, not the Lispy one; it does not map the function repeatedly to each element of a list. The transformation function should not mutate its arguments.
 
 ```lisp
-(let ((g (generator (tuple (map (lambda (x) (list x x x)) (integer 3 20))
-                           (map (lambda (x) (list x x)) (integer 3 20))))))
+(let ((*size* 100)
+      (g (generator (tuple (map (lambda (x y) (list x y))
+                                (integer 1 10)
+                                (integer 20 30))
+                           (map (lambda (x y) (list x (+ x y)))
+                                (integer 1 9)
+                                10)))))
   (generate g))
-;;; sample result: ((8 8 8) (4 4))
+;;; sample result: ((10 28) (7 17))
 ```
 
 ### Chained Generators
