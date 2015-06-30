@@ -21,6 +21,7 @@ The basic idea behind QuickCheck-style tools is simple, but they become complica
     * [Generator Macros](#generator-macros)
   * [Checking](#checking)
     * [Regression Cases](#regression-cases)
+      * [Note on Mapped Generators)(#note-on-mapped-generators)
   * [Shrinking](#shrinking)
     * [Note on Destructive Operations](#note-on-destructive-operations)
 
@@ -327,9 +328,13 @@ Regression cases must be given a `regression-id` to know which `check-it` form t
 
 It is recommended that you output your regression cases to a special file that initially contains only the line `(in-package :same-package-as-test-package)` and is loaded as part of the same system as your tests. Then the next time you run a check-it test, all the regression cases will be checked before any random cases are generated, which should hopefully light a fire under your ass to fix bugs you've already discovered before you hunt for new ones.
 
+You can also provide a list of explicit inline examples that will also be checked before any random cases are generated using the `:examples` keyword argument to `check-it`.
+
 Eventually, check-it will be integrated more elegantly with individual test frameworks by extending their APIs. For now, you can reduce code repetition by declaring a file to output regression cases for all `regression-id`s in a given package with `(register-package-regression-file :package file)`, so you don't have to mention the file in each test.
 
-You can also provide a list of explicit inline examples that will also be checked before any random cases are generated using the `:examples` keyword argument to `check-it`.
+#### Note on Mapped Generators
+
+All data types constructed with check-it's essential generators can be successfully converted to readable print representations, but it's possible that something you create with a mapped generator will produce a data type that can't. If you want to enable regression cases for tests involving unexternalizable data types, try to find a way to construct those data types within the test body if possible. Eventually, check-it may use a more robust solution for externalization, but this simple method can get you surprisingly far.
 
 ## Shrinking
 
