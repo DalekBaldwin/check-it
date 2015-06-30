@@ -70,6 +70,7 @@
 (defun check-it% (test-form generator test
                   &key
                     examples
+                    shrink-failures
                     (random-state t)
                     (regression-id nil regression-id-supplied)
                     (regression-file (when regression-id-supplied
@@ -120,18 +121,22 @@
            do
              (progn
                (generate generator)
-               (let ((result (funcall error-reporting-test (cached-value generator))))
-                 (flet ((do-shrink ()
+               (let (;; produce readable representation before anybody mutates this value
+                     (stringified-value (format nil "~A" (cached-value generator)))
+                     (result (funcall error-reporting-test (cached-value generator))))
+                 (flet ((save-regression (string)
+                          (when regression-file
+                            (push value (get regression-id 'regression-cases))
+                            (with-open-file (s regression-file
+                                               :direction :output
+                                               :if-exists :append
+                                               :if-does-not-exist :error)
+                              (format s "~&~S~%"
+                                      (write-regression-case regression-id string)))))
+                        (do-shrink ()
                           (let ((shrunk (shrink generator shrink-test)))
                             (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
-                            (when regression-file
-                              (push shrunk (get regression-id 'regression-cases))
-                              (with-open-file (s regression-file
-                                                 :direction :output
-                                                 :if-exists :append
-                                                 :if-does-not-exist :error)
-                                (format s "~&~S~%"
-                                        (write-regression-case regression-id shrunk)))))))
+                            shrunk)))
                    (cond
                      ((null result)
                       (format *check-it-output*
@@ -139,8 +144,10 @@
                               test-form
                               test
                               *random-state*
-                              (cached-value generator))
-                      (do-shrink)
+                              stringified-value)
+                      (save-regression (if shrink-failures
+                                           (format nil "~A" (do-shrink))
+                                           stringified-value))
                       (return-from trial-run nil))
                      ((errored result)
                       (format *check-it-output*
@@ -149,20 +156,24 @@
                               test
                               (wrapped-error result)
                               *random-state*
-                              (cached-value generator))
-                      (do-shrink)
+                              stringified-value)
+                      (save-regression (if shrink-failures
+                                           (format nil "~A" (do-shrink))
+                                           stringified-value))
                       (return-from trial-run nil))))))))
       (return-from trial-run t))))
 
 (defmacro check-it (generator test
                     &key
                       examples
+                      (shrink-failures t)
                       (random-state t random-state-supplied)
                       (regression-id nil regression-id-supplied)
                       (regression-file nil regression-file-supplied))
   "Macro for performing a randomized test run."
   `(check-it% ',test ,generator ,test
               :examples ,examples
+              :shrink-failures ,shrink-failures
               ,@(when random-state-supplied `(:random-state ,random-state))
               ,@(when regression-id-supplied `(:regression-id ',regression-id))
               ,@(when regression-file-supplied `(:regression-file ,regression-file))))
