@@ -356,4 +356,4 @@ For chained generators, the parameterizers are not involved in the shrinking pro
 
 ### Note on Destructive Operations
 
-Currently, generators cache their generated values and often make use of them during the shrinking process. If you perform destructive operations on the input to a test function, shrinking may not work correctly. This will be fixed eventually.
+Currently, generators cache their generated values and often make use of them during the shrinking process. If you perform destructive operations on the input to a test function, shrinking may not work correctly. This will be fixed eventually. In the meantime, you can turn off shrinking by giving `check-it` the keyword argument `:shrink-failures nil`.
