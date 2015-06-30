@@ -126,7 +126,7 @@
                      (result (funcall error-reporting-test (cached-value generator))))
                  (flet ((save-regression (string)
                           (when regression-file
-                            (push value (get regression-id 'regression-cases))
+                            (push string (get regression-id 'regression-cases))
                             (with-open-file (s regression-file
                                                :direction :output
                                                :if-exists :append
