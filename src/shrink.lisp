@@ -261,13 +261,20 @@ that of the alternative that was originally tried."
       (setf cached-value result))))
 
 (defmethod shrink ((value mapped-generator) test)
-  (with-obvious-accessors (cached-value sub-generator mapping) value
-    (let ((result
-           (funcall mapping
-                    (shrink sub-generator
-                            (lambda (x)
-                              (funcall (compose test mapping) x))))))
-      (setf cached-value result))))
+  (with-obvious-accessors (cached-value sub-generators mapping) value
+    (loop
+         for sub-generator in sub-generators
+         for i from 0
+         do
+         (let ((shrunk-elem
+                (shrink sub-generator
+                        (lambda (x)
+                          (funcall test
+                                   (let ((test-tuple
+                                          (mapcar #'cached-value sub-generators)))
+                                     (setf (nth i test-tuple) x)
+                                     (apply mapping test-tuple)))))))))
+    (apply mapping (mapcar #'cached-value sub-generators))))
 
 (defmethod shrink ((value chained-generator) test)
   (with-obvious-accessors (cached-value cached-generator) value

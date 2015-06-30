@@ -382,6 +382,16 @@
            (generate g)
            (is (equal (shrink-and-trap-errors g (constantly nil)) '((3 3 3) (3 3))))))))
 
+(deftest test-mapped-generator-multiarg-shrink ()
+  (let ((*size* 100)
+        (g (generator (map (lambda (x y) (list x (+ x y))) (integer 3 50) (integer 4 50)))))
+    (loop repeat 10
+       do
+         (progn
+           (generate g)
+           (is (equal (shrink-and-trap-errors g (constantly nil))
+                      (list 3 7)))))))
+
 (deftest test-int-generator-regenerate ()
   (let ((g (generator (integer))))
     (loop repeat 10
@@ -428,6 +438,12 @@
 
 (deftest test-mapped-generator-regenerate ()
   (let ((g (generator (map (lambda (x) (list x x x)) (list (integer))))))
+    (loop repeat 10
+       do
+         (is (equal (generate g) (regenerate g))))))
+
+(deftest test-mapped-generator-multiarg-regenerate ()
+  (let ((g (generator (map (lambda (x y) (list x x y)) (integer) (tuple (integer))))))
     (loop repeat 10
        do
          (is (equal (generate g) (regenerate g))))))
