@@ -67,10 +67,11 @@
 
 (deftest test-mapped-generator-mutation ()
   (let ((g (generator
-            (map (lambda (x) (list x x x))
-                 (list (integer) :min-length 2)))))
+            (map (lambda (x y) (list y x y x))
+                 (list (integer) :min-length 2)
+                 (list (integer) :min-length 3)))))
     (loop repeat 10
-       collect
+       do
          (let* ((test-value (generate g))
                 (copied (copy-tree test-value)))
            (setf (caar test-value) :derp

@@ -180,7 +180,7 @@
   (let ((min-g (generator (integer 0)))
         (interval-g (generator (integer 1))))
     (loop repeat 20
-       collect
+       do
          (progn
            (let* ((min (generate min-g))
                   (interval (generate interval-g))
@@ -191,7 +191,7 @@
              (is (<= min (length (generate list-g)) (+ min interval)))))))
   (let ((bound-g (generator (integer 0))))
     (loop repeat 10
-       collect
+       do
          (progn
            (let* ((bound (generate bound-g))
                   (list-g
@@ -330,7 +330,7 @@
                     (y (integer 30 40)))
               (generator (list (integer x y) :min-length x :max-length y))))))
     (loop repeat 50
-       collect
+       do
          (progn
            (generate g)
            (let ((min (apply #'min (mapcar #'cached-value
