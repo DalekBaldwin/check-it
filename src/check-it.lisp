@@ -30,11 +30,11 @@
                   :timestamp timestamp)
    (get name 'regression-cases)))
 
-(defun write-regression-case (name datum)
+(defun write-regression-case (name data-string)
   "Produce code for a regression case to be written to a file."
   `(regression-case
     :name ,name
-    :datum ,(format nil "~S" datum)
+    :datum ,(format nil "~A" data-string)
     :timestamp ,(get-universal-time)))
 
 (defparameter *check-it-output* *standard-output*)
@@ -101,20 +101,21 @@
       (when regression-id
         (loop for regression-case in (get regression-id 'regression-cases)
            do
-             (let ((result (funcall error-reporting-test regression-case)))
+             (let* ((datum (datum regression-case))
+                    (result (funcall error-reporting-test datum)))
                (cond
                  ((null result)
                   (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
                           test-form
                           regression-id
-                          regression-case)
+                          datum)
                   (return-from trial-run nil))
                  ((errored result)
                   (format *check-it-output* "~&Test ~A signaled error ~A on regression ~A with arg ~A~%"
                           test-form
                           (wrapped-error result)
                           regression-id
-                          regression-case)
+                          datum)
                   (return-from trial-run nil))))))
       (let ((*random-state* (make-random-state random-state)))
         (loop repeat *num-trials*
@@ -122,7 +123,7 @@
              (progn
                (generate generator)
                (let (;; produce readable representation before anybody mutates this value
-                     (stringified-value (format nil "~A" (cached-value generator)))
+                     (stringified-value (format nil "~S" (cached-value generator)))
                      (result (funcall error-reporting-test (cached-value generator))))
                  (flet ((save-regression (string)
                           (when regression-file
@@ -146,7 +147,7 @@
                               *random-state*
                               stringified-value)
                       (save-regression (if shrink-failures
-                                           (format nil "~A" (do-shrink))
+                                           (format nil "~S" (do-shrink))
                                            stringified-value))
                       (return-from trial-run nil))
                      ((errored result)
@@ -158,7 +159,7 @@
                               *random-state*
                               stringified-value)
                       (save-regression (if shrink-failures
-                                           (format nil "~A" (do-shrink))
+                                           (format nil "~S" (do-shrink))
                                            stringified-value))
                       (return-from trial-run nil))))))))
       (return-from trial-run t))))
