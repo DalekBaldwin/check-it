@@ -105,7 +105,11 @@ You can also specify length bounds with `:min-length` and `:max-length`. `:max-l
 (generator (list (integer) :min-length 5 :max-length 10))
 ```
 
-For convenience, you can specify lists of fixed length with a single keyword argument: `(list (integer) :length 5)`
+For convenience, you can specify lists of fixed length with a single keyword argument:
+
+```lisp
+(generator (list (integer) :length 5))
+```
 
 The `tuple` generator generates a list containing one result from each of its subgenerators in order, so unlike the `list` generator, its length is fixed:
 
