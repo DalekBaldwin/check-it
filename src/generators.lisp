@@ -423,12 +423,12 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
            (funcall proceed)
         (setf bias old-bias)))))
 
-(defun make-list-generator (generator-function
-                            &rest keys
-                            &key
-                              (min-length nil min-supplied)
-                              (max-length nil max-supplied)
-                              (length nil length-supplied))
+(defun make-list-generator-form (generator-function
+                                 &rest keys
+                                 &key
+                                   (min-length nil min-supplied)
+                                   (max-length nil max-supplied)
+                                   (length nil length-supplied))
   (declare (ignorable min-length max-length))
   (cond
     ((and length-supplied min-supplied)
@@ -436,15 +436,17 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
     ((and length-supplied max-supplied)
      (error ":LENGTH and :MAX-LENGTH were both supplied."))
     (length-supplied
-     (apply #'make-instance 'list-generator
-            :generator-function generator-function
-            :min-length length
-            :max-length length
-            (remove-from-plist keys :length)))
+     (with-gensyms (length-temp)
+       `(let ((,length-temp ,length))
+          (make-instance 'list-generator
+                         :generator-function ,generator-function
+                         :min-length ,length-temp
+                         :max-length ,length-temp
+                         ,@(remove-from-plist keys :length)))))
     (t
-     (apply #'make-instance 'list-generator
-            :generator-function generator-function
-            keys))))
+     `(make-instance 'list-generator
+                     :generator-function ,generator-function
+                     ,@keys))))
 
 (defun expand-generator (exp)
   (cond
@@ -523,8 +525,8 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
         (when (null (second exp))
           (error "LIST generator requires a subgenerator."))
         (destructuring-bind (sub-generator &rest keys) (rest exp)
-          `(make-list-generator (lambda () ,(expand-generator sub-generator))
-                                ,@keys)))
+          (apply #'make-list-generator-form `(lambda () ,(expand-generator sub-generator))
+                 keys)))
        (string
         `(make-instance 'string-generator ,@(rest exp)))
        (tuple
