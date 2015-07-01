@@ -448,6 +448,28 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
                      :generator-function ,generator-function
                      ,@keys))))
 
+(defun make-string-generator-form (&rest keys
+                                   &key
+                                     (min-length nil min-supplied)
+                                     (max-length nil max-supplied)
+                                     (length nil length-supplied))
+  (declare (ignorable min-length max-length))
+  (cond
+    ((and length-supplied min-supplied)
+     (error ":LENGTH and :MIN-LENGTH were both supplied."))
+    ((and length-supplied max-supplied)
+     (error ":LENGTH and :MAX-LENGTH were both supplied."))
+    (length-supplied
+     (with-gensyms (length-temp)
+       `(let ((,length-temp ,length))
+          (make-instance 'string-generator
+                         :min-length ,length-temp
+                         :max-length ,length-temp
+                         ,@(remove-from-plist keys :length)))))
+    (t
+     `(make-instance 'string-generator
+                     ,@keys))))
+
 (defun expand-generator (exp)
   (cond
     ((atom exp) exp)
@@ -528,7 +550,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
           (apply #'make-list-generator-form `(lambda () ,(expand-generator sub-generator))
                  keys)))
        (string
-        `(make-instance 'string-generator ,@(rest exp)))
+        (apply #'make-string-generator-form (rest exp)))
        (tuple
         `(make-instance 'tuple-generator
                         :sub-generators (list ,@(loop for elem in (rest exp)
