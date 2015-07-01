@@ -196,8 +196,7 @@
            (let* ((bound (generate bound-g))
                   (list-g
                    (generator (list (integer)
-                                    :min-length bound
-                                    :max-length bound))))
+                                    :length bound))))
              (is (= bound (length (generate list-g)))))))))
 
 (deftest test-list-generator-shrink ()

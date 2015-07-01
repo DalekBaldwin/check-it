@@ -105,6 +105,8 @@ You can also specify length bounds with `:min-length` and `:max-length`. `:max-l
 (generator (list (integer) :min-length 5 :max-length 10))
 ```
 
+For convenience, you can specify lists of fixed length with a single keyword argument: `(list (integer) :length 5)`
+
 The `tuple` generator generates a list containing one result from each of its subgenerators in order, so unlike the `list` generator, its length is fixed:
 
 ```lisp
@@ -189,8 +191,9 @@ For example, you can generate random NxN matrices like this:
 ```lisp
 (let ((g (generator
           (chain ((n (integer 1 5)))
-            (generator (list (list (integer) :min-length n :max-length n)
-                             :min-length n :max-length n))))))
+            (generator (list
+                        (list (integer) :length n)
+                        :length n))))))
   (generate g))
 ;; sample result: ((-2 0 -9 -6) (6 7 -3 -7) (9 -10 10 6) (-6 -10 -10 8))
 ```
