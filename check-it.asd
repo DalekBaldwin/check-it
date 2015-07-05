@@ -14,6 +14,7 @@
   #.(uiop:read-file-string
      (uiop:subpathname *load-pathname* "README.md"))
   :homepage "https://github.com/DalekBaldwin/check-it"
+  :version "0.1.0"
   :components
   ((:static-file "check-it.asd")
    (:module :src
