@@ -1,6 +1,7 @@
 # check-it
 
 [![Build Status](https://travis-ci.org/DalekBaldwin/check-it.svg?branch=master)](https://travis-ci.org/DalekBaldwin/check-it)
+[![Quicklisp](http://quickdocs.org/badge/check-it.svg)](http://quickdocs.org/check-it/)
 
 This is a randomized property-based testing library for Common Lisp. Rather than being a full-fledged general test framework in its own right, it's designed to embed randomized tests in whatever framework you like.
 
