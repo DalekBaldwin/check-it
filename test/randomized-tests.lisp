@@ -303,8 +303,8 @@
   (let ((*list-size* 100)
         (*size* 100)
         (g
-         #G(chain ((x (integer 10 12))
-                   (y (integer 18 20)))
+         #G(chain ((x #G(integer 10 12))
+                   (y #G(integer 18 20)))
                   #G(list (integer) :min-length x :max-length y))))
     (let ((lengths
            (loop repeat 50
@@ -322,8 +322,8 @@
                  :examples (list (iota 10) (iota 20))))))
   (let ((*list-size* 100)
         (*size* 100)
-        (g #G(chain ((x (integer 10 20))
-                     (y (integer 30 40)))
+        (g #G(chain ((x #G(integer 10 20))
+                     (y #G(integer 30 40)))
                     #G(list (integer x y) :min-length x :max-length y))))
     (loop repeat 50
        do
@@ -352,8 +352,8 @@
   (let ((*list-size* 100)
         (*size* 100)
         (g #G(list
-              (chain ((x (integer 10 20))
-                      (y (integer 21 30)))
+              (chain ((x #G(integer 10 20))
+                      (y #G(integer 21 30)))
                      #G(list (integer x y) :min-length x :max-length y))
               :min-length 5 :max-length 10)))
     (loop repeat 50
@@ -444,8 +444,8 @@
          (is (equal (generate g) (regenerate g))))))
 
 (deftest test-chained-generator-regenerate ()
-  (let ((g #G(chain ((x (integer 10 20))
-                     (y (integer 21 30)))
+  (let ((g #G(chain ((x #G(integer 10 20))
+                     (y #G(integer 21 30)))
                     #G(list (integer x y) :min-length x :max-length y))))
     (loop repeat 10
        do
