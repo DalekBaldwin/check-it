@@ -1,5 +1,5 @@
 (in-package :check-it-test)
-(named-readtables:in-readtable :check-it)
+(named-readtables:in-readtable check-it)
 
 (register-package-regression-file
  :check-it-test

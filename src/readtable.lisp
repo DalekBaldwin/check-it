@@ -4,6 +4,6 @@
   (declare (ignore char numarg))
   `(generator ,(read stream t nil t)))
 
-(named-readtables:defreadtable :check-it
+(named-readtables:defreadtable check-it
   (:merge :standard)
   (:dispatch-macro-char #\# #\G #'generator-reader))
