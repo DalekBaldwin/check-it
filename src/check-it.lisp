@@ -70,7 +70,7 @@
 (defun check-it% (test-form generator test
                   &key
                     examples
-                    shrink-failures
+                    (shrink-failures t)
                     (random-state t)
                     (regression-id nil regression-id-supplied)
                     (regression-file (when regression-id-supplied
@@ -178,3 +178,24 @@
               ,@(when random-state-supplied `(:random-state ,random-state))
               ,@(when regression-id-supplied `(:regression-id ',regression-id))
               ,@(when regression-file-supplied `(:regression-file ,regression-file))))
+
+(defmacro with-generators (bindings &body body)
+  "Convience macro for binding variables to generators and running
+   tests with them."
+  ;; I need to come up with better names for these.
+  (with-gensyms (ggen ggarg gargs)
+    (loop for (symbol generator) in bindings
+          collect generator into generators
+          collect symbol into symbols
+          finally (return
+                    `(let ((,ggen (generator (tuple ,@generators))))
+                       (macrolet ((check-that (expr &rest ,gargs)
+                                    (let ((,ggarg (gensym "ARG")))
+                                      `(apply #'check-it%
+                                              ',expr
+                                              ,',ggen
+                                              (lambda (,,ggarg)
+                                                (destructuring-bind ,',symbols ,,ggarg
+                                                  ,@expr))
+                                              (list ,@,gargs)))))
+                         ,@body))))))
