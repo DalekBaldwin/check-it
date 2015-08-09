@@ -23,9 +23,10 @@
                          (:file "generators")
                          (:file "regenerate")
                          (:file "shrink")
-                         (:file "check-it"))
+                         (:file "check-it")
+                         (:file "readtable"))
             :serial t))
-  :depends-on (:alexandria :closer-mop :optima)
+  :depends-on (:alexandria :closer-mop :optima :named-readtables)
   :in-order-to ((test-op (load-op :check-it-test)))
   :perform (test-op :after (op c)
                     (funcall
