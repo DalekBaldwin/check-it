@@ -604,7 +604,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
                    (binding-gens
                     (loop for param in params
                        collect (cond
-                                 ((listp param) (expand-generator (second param)))
+                                 ((listp param) (second param))
                                  (t param)))))
                `(make-instance 'chained-generator
                                :pre-generators (list ,@binding-gens)
