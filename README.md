@@ -210,11 +210,10 @@ Note that the body and the binding forms are evaluated as normal Lisp code, so y
 If you provide only a name for a parameterizer instead of a list containing a name and a generator form, the name is assumed to be a variable already bound to a generator in the surrounding Lisp code:
 
 ```lisp
-(defparameter *x* #G(integer 1 3))
-
-(let ((y #G(integer 8 10)))
-  (generator (chain (*x* y)
-               #G(list (integer) :min-length *x* :max-length y))))
+(let ((x #G(integer 1 3))
+      (y #G(integer 8 10)))
+  #G(chain (x y)
+           #G(list (integer) :min-length x :max-length y)))
 ```
 
 ### User-Defined Generators
@@ -290,7 +289,7 @@ You can define transformations using destructuring lambda lists that work just l
 (def-genex-macro maybe (form)
   `(or nil ,form))
 
-(generate (generator (list (maybe (integer)))))
+(generate #G(list (maybe (integer))))
 ;; sample result: (NIL NIL NIL NIL 7 -4 2 NIL NIL 3 7 -8 NIL 7)
 ```
 
