@@ -196,6 +196,6 @@
                                               ,',ggen
                                               (lambda (,,ggarg)
                                                 (destructuring-bind ,',symbols ,,ggarg
-                                                  ,@expr))
+                                                  ,expr))
                                               (list ,@,gargs)))))
                          ,@body))))))
