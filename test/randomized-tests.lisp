@@ -487,3 +487,8 @@
     (loop repeat 10
        do
          (is (equalp (generate g) (regenerate g))))))
+
+(deftest test-with-generators ()
+  (with-generators ((x (integer))
+                    (y (integer)))
+    (is (check-that (= (+ x y) (+ x y))))))
