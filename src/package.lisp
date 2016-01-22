@@ -59,7 +59,9 @@
            #:check-it
            
            #:with-generators
-           #:check-that))
+           #:check-that
+
+           #:generator-reader))
 
 (in-package :check-it)
 

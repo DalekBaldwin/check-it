@@ -1,4 +1,5 @@
 (in-package :check-it-test)
+(named-readtables:in-readtable check-it)
 
 (in-root-suite)
 
@@ -80,8 +81,8 @@
 
 (deftest test-chained-generator-mutation ()
   (let ((g (generator
-            (chain ((x (integer 10 20))
-                    (y (integer 21 30)))
+            (chain ((x #G(integer 10 20))
+                    (y #G(integer 21 30)))
               (generator (list (integer x y) :min-length x :max-length y))))))
     (loop repeat 10
        do
