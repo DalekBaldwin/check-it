@@ -179,23 +179,90 @@
               ,@(when regression-id-supplied `(:regression-id ',regression-id))
               ,@(when regression-file-supplied `(:regression-file ,regression-file))))
 
-(defmacro with-generators (bindings &body body)
-  "Convience macro for binding variables to generators and running
-   tests with them."
-  ;; I need to come up with better names for these.
-  (with-gensyms (ggen ggarg gargs)
-    (loop for (symbol generator) in bindings
-          collect generator into generators
-          collect symbol into symbols
-          finally (return
-                    `(let ((,ggen (generator (tuple ,@generators))))
-                       (macrolet ((check-that (expr &rest ,gargs)
-                                    (let ((,ggarg (gensym "ARG")))
-                                      `(apply #'check-it%
-                                              ',expr
-                                              ,',ggen
-                                              (lambda (,,ggarg)
-                                                (destructuring-bind ,',symbols ,,ggarg
-                                                  ,expr))
-                                              (list ,@,gargs)))))
-                         ,@body))))))
+(def-dynenv-macro check-that
+    (expr
+     &rest keys
+     &key
+       examples
+       (shrink-failures t)
+       (random-state t random-state-supplied)
+       (regression-id nil regression-id-supplied)
+       (regression-file nil regression-file-supplied))
+  (declare (ignore examples shrink-failures random-state
+                   random-state-supplied regression-id regression-id-supplied
+                   regression-file regression-file-supplied))
+  (with-gensyms (agg)
+    `(check-it%
+      ',expr
+      (generator (tuple ,@**generator-symbols**))
+      (lambda (,agg)
+        (destructuring-bind (,@**generator-symbols**) ,agg
+          (declare (ignorable ,@**generator-symbols**))
+          ;; bind mappings from innermost to outermost
+          (let* (,@(loop for (sym fun args) in (reverse **mappings**)
+                      collect
+                        `(,sym (,fun ,@args))))
+            (declare (ignorable ,@(mapcar #'first **mappings**)))
+            ,expr)))
+      ,@keys)))
+
+;; todo: handle shadowing of earlier variable names
+(def-dynenv-macro let-map (bindings &body body)
+  (let ((binding-symbols
+         (loop for (sym form) in bindings collect sym))
+        (binding-gensyms
+         (loop for (sym form) in bindings collect (gensym (symbol-name sym)))))
+    (let* ((mapping-symbols (mapcar #'first **mappings**))
+           (new-mappings
+            (loop for symbol in binding-symbols
+               for gensym in binding-gensyms
+               collect
+                 (list symbol gensym
+                       ;; a mapping can depend on any generator or mapping bound above
+                       (append **generator-symbols** mapping-symbols)))))
+      `(flet (,@(loop for (name . map-body) in bindings
+                   for gensym in binding-gensyms
+                   collect `(,gensym (,@**generator-symbols**
+                                      ,@mapping-symbols)
+                                     (declare (ignorable ,@**generator-symbols**
+                                                         ,@mapping-symbols))
+                                     ,@map-body)))
+         ,(ct-let ((**mappings**
+                    (reduce (lambda (accum item)
+                              (destructuring-bind (symbol . data) item
+                                (update-alist symbol data accum)))
+                            new-mappings
+                            :initial-value **mappings**)))
+                  `(progn ,@body))))))
+
+(defmacro let-map* (bindings &body body)
+  (cond
+    ((endp bindings)
+     `(progn ,@body))
+    (t
+     `(let-map (,(first bindings))
+        (let-map* (,@(rest bindings))
+           ,@body)))))
+
+#+nil
+(with-generators ((x (generator (integer)))
+                    (y (generator (integer))))
+    (let-map* ((a (+ x y))
+               (b (+ a a)))
+      (check-that (= b (* 2 a)))))
+
+(def-dynenv-macro with-generators (bindings &body body)
+  (let ((symbols
+         (loop for binding in bindings
+            collect
+              (cond
+                ((listp binding)
+                 (first binding))
+                (t
+                 binding)))))
+    `(let (,@(loop for binding in bindings
+                when (listp binding)
+                collect binding))
+       ,(ct-let ((**generator-symbols**
+                  (union symbols **generator-symbols**)))
+                `(progn ,@body)))))

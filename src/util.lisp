@@ -45,3 +45,24 @@
                  (symbol-name type-name)))
     (funcall (get-dispatch-macro-character #\# #\S)
              s #\S nil)))
+
+(defun update-alist (item value alist)
+  "Non-destructively replace cdr of the cons whose car matches ITEM in ALIST
+with VALUE, or insert a new cons if no car matches ITEM."
+  (destructuring-bind (replacedp new-alist)
+      (reduce (lambda (accum item)
+                (destructuring-bind (replacedp new-alist) accum
+                  (cond
+                    (replacedp
+                     (list replacedp (list* item new-alist)))
+                    ((eql item (car item))
+                     (list t (list* (cons item value) new-alist)))
+                    (t
+                     (list replacedp (list* item new-alist))))))
+              alist
+              :initial-value (list nil nil))
+    (cond
+      (replacedp
+       (reverse new-alist))
+      (t
+       (list* (cons item value) alist)))))

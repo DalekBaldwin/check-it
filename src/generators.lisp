@@ -7,6 +7,10 @@
 (defparameter *bias-sensitivity* 6.0)
 (defparameter *recursive-bias-decay* 1.5)
 
+(def-dynenv-var **generator-symbols** nil)
+(def-dynenv-var **mappings** nil)
+(def-dynenv-var **local-genex-macros** nil)
+
 (defclass generator ()
   ((cached-value
     :initarg :cached-value
@@ -39,8 +43,8 @@
   (declare (ignore initargs))
   (with-obvious-accessors
       (lower-limit upper-limit generator-function shrinker-predicate) instance
-      (setf generator-function (int-generator-function lower-limit upper-limit)
-            shrinker-predicate (int-shrinker-predicate lower-limit upper-limit))))
+    (setf generator-function (int-generator-function lower-limit upper-limit)
+          shrinker-predicate (int-shrinker-predicate lower-limit upper-limit))))
 
 (defclass real-generator (simple-generator)
   ((lower-limit
@@ -470,161 +474,186 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
      `(make-instance 'string-generator
                      ,@keys))))
 
+(def-dynenv-macro generator (exp)
+  "Macro to establish the beginning of a section of code in the generator DSL."
+  (expand-generator exp))
+
 (defun expand-generator (exp)
   (cond
     ((atom exp) exp)
     ((symbolp (first exp))
-     (case (first exp)
-       (quote
-        `',(second exp))
-       (boolean
-        `(make-instance 'bool-generator))
-       (integer
-        `(make-instance
-          'int-generator
-          ,@(destructuring-bind
-             (&optional lower upper) (rest exp)
-             (append
-              (when lower
-                (list :lower-limit
-                      (if (eql lower '*)
-                          ''*
-                          lower)))
-              (when upper
-                (list :upper-limit
-                      (if (eql upper '*)
-                          ''*
-                          upper)))))))
-       (real
-        `(make-instance
-          'real-generator
-          ,@(destructuring-bind
-             (&optional lower upper) (rest exp)
-             (append
-              (when lower
-                (list :lower-limit
-                      (if (eql lower '*)
-                          ''*
-                          lower)))
-              (when upper
-                (list :upper-limit
-                      (if (eql upper '*)
-                          ''*
-                          upper)))))))
-       (character
-        `(make-instance
-          'char-generator
-          ,@(destructuring-bind
-             (&optional lower upper) (rest exp)
-             (append
-              (when lower
-                (list :lower-limit
-                      (if (eql lower '*)
-                          ''*
-                          lower)))
-              (when upper
-                (list :upper-limit
-                      (if (eql upper '*)
-                          ''*
-                          upper)))))))
-       (alpha
-        `(make-instance 'or-generator
-                        :sub-generators
-                        (list ,(expand-generator '(character
-                                                   #.(char-code #\A)
-                                                   #.(char-code #\Z)))
-                              ,(expand-generator '(character
-                                                   #.(char-code #\a)
-                                                   #.(char-code #\z))))))
-       (alphanumeric
-        `(make-instance 'or-generator
-                        :sub-generators
-                        (list ,(expand-generator '(alpha))
-                              ,(expand-generator '(character
-                                                   #.(char-code #\0)
-                                                   #.(char-code #\9))))))
-       (list
-        (when (null (second exp))
-          (error "LIST generator requires a subgenerator."))
-        (destructuring-bind (sub-generator &rest keys) (rest exp)
-          (apply #'make-list-generator-form `(lambda () ,(expand-generator sub-generator))
-                 keys)))
-       (string
-        (apply #'make-string-generator-form (rest exp)))
-       (tuple
-        `(make-instance 'tuple-generator
-                        :sub-generators (list ,@(loop for elem in (rest exp)
-                                                   collect (expand-generator elem)))))
-       (or
-        (when (endp (rest exp))
-          (error "OR generator requires at least one subgenerator"))
-        `(make-instance 'or-generator
-                        :sub-generators (list ,@(loop for elem in (rest exp)
-                                                   collect (expand-generator elem)))))
-       (guard
-        `(make-instance 'guard-generator
-                        :guard ,(second exp)
-                        :sub-generator ,(expand-generator (third exp))))
-       (struct
-        (let* ((struct-type (second exp))
-               (slot-names (struct-type-slot-names struct-type)))
-          (loop for (keyword gen) on (cddr exp) by #'cddr
-             collect (list keyword gen) into keywords-and-gens
-             finally
-               (return
-                 (let ((sorted-slots
-                        (sort keywords-and-gens #'<
-                              :key (lambda (keyword-and-gen)
-                                     (position (first keyword-and-gen) slot-names
-                                               :test (lambda (key sym)
-                                                       (equal (symbol-name key)
-                                                              (symbol-name sym))))))))
-                   `(make-instance
-                     'struct-generator
-                     :struct-type ',struct-type
-                     :slot-names (list ,@(loop for slot-name in slot-names
-                                            collect `(quote ,slot-name)))
-                     :slot-keywords (list ,@(mapcar #'first sorted-slots))
-                     :slot-generators
-                     (list ,@(loop for slot in sorted-slots
-                                collect (expand-generator (second slot))))))))))
-       (map
-        (destructuring-bind (mapping &rest sub-generators) (rest exp)
-          `(make-instance 'mapped-generator
-                          :mapping ,mapping
-                          :sub-generators (list ,@(loop for elem in sub-generators
-                                                     collect (expand-generator elem))))))
-       (chain
-           (destructuring-bind (params &rest body) (rest exp)
-             (let ((binding-vars
-                    (loop for param in params
-                       collect (cond
-                                 ((listp param) (first param))
-                                 (t param))))
-                   (binding-gens
-                    (loop for param in params
-                       collect (cond
-                                 ((listp param) (second param))
-                                 (t param)))))
-               `(make-instance 'chained-generator
-                               :pre-generators (list ,@binding-gens)
-                               :generator-function (lambda ,binding-vars ,@body)))))
-       (otherwise
-        (case (get (first exp) 'genex-type)
-          (generator
-           (let* ((gen-name (first exp)))
-             `(funcall ,(get gen-name 'generator-form) ,@(rest exp))))
-          (macro
-           (expand-generator
-            (funcall (get (first exp) 'genex-macro)
-                     (rest exp))))
-          (otherwise
-           exp)))))
+     (expand-genex (first exp) exp))
     (t exp)))
 
-(defmacro generator (exp)
-  "Macro to establish the beginning of a section of code in the generator DSL."
-  (expand-generator exp))
+(defgeneric expand-genex (head exp))
+
+(defmethod expand-genex (head exp)
+  (cond
+    #+nil
+    ((assoc head **local-genex-macros**)
+     (expand-generator
+      (funcall (cdr (assoc head **local-genex-macros**))
+               (rest exp))))
+    (t
+     (case (get head 'genex-type)
+       (generator
+        (let* ((gen-name head))
+          `(funcall ,(get gen-name 'generator-form) ,@(rest exp))))
+       (macro
+        (expand-generator
+         (funcall (get head 'genex-macro)
+                  (rest exp))))
+       (otherwise
+        exp)))))
+
+(defmethod expand-genex ((head (eql 'quote)) exp)
+  `',(second exp))
+
+(defmethod expand-genex ((head (eql 'boolean)) exp)
+  `(make-instance 'bool-generator))
+
+(defmethod expand-genex ((head (eql 'integer)) exp)
+  `(make-instance
+    'int-generator
+    ,@(destructuring-bind
+       (&optional lower upper) (rest exp)
+       (append
+        (when lower
+          (list :lower-limit
+                (if (eql lower '*)
+                    ''*
+                    lower)))
+        (when upper
+          (list :upper-limit
+                (if (eql upper '*)
+                    ''*
+                    upper)))))))
+
+(defmethod expand-genex ((head (eql 'real)) exp)
+  `(make-instance
+    'real-generator
+    ,@(destructuring-bind
+       (&optional lower upper) (rest exp)
+       (append
+        (when lower
+          (list :lower-limit
+                (if (eql lower '*)
+                    ''*
+                    lower)))
+        (when upper
+          (list :upper-limit
+                (if (eql upper '*)
+                    ''*
+                    upper)))))))
+
+(defmethod expand-genex ((head (eql 'character)) exp)
+  `(make-instance
+    'char-generator
+    ,@(destructuring-bind
+       (&optional lower upper) (rest exp)
+       (append
+        (when lower
+          (list :lower-limit
+                (if (eql lower '*)
+                    ''*
+                    lower)))
+        (when upper
+          (list :upper-limit
+                (if (eql upper '*)
+                    ''*
+                    upper)))))))
+
+(defmethod expand-genex ((head (eql 'alpha)) exp)
+  `(make-instance 'or-generator
+                  :sub-generators
+                  (list ,(expand-generator '(character
+                                             #.(char-code #\A)
+                                             #.(char-code #\Z)))
+                        ,(expand-generator '(character
+                                             #.(char-code #\a)
+                                             #.(char-code #\z))))))
+
+(defmethod expand-genex ((head (eql 'alphanumeric)) exp)
+  `(make-instance 'or-generator
+                  :sub-generators
+                  (list ,(expand-generator '(alpha))
+                        ,(expand-generator '(character
+                                             #.(char-code #\0)
+                                             #.(char-code #\9))))))
+
+(defmethod expand-genex ((head (eql 'list)) exp)
+  (when (null (second exp))
+    (error "LIST generator requires a subgenerator."))
+  (destructuring-bind (sub-generator &rest keys) (rest exp)
+    (apply #'make-list-generator-form `(lambda () ,(expand-generator sub-generator))
+           keys)))
+
+(defmethod expand-genex ((head (eql 'string)) exp)
+  (apply #'make-string-generator-form (rest exp)))
+
+(defmethod expand-genex ((head (eql 'tuple)) exp)
+  `(make-instance 'tuple-generator
+                  :sub-generators (list ,@(loop for elem in (rest exp)
+                                             collect (expand-generator elem)))))
+
+(defmethod expand-genex ((head (eql 'or)) exp)
+  (when (endp (rest exp))
+    (error "OR generator requires at least one subgenerator"))
+  `(make-instance 'or-generator
+                  :sub-generators (list ,@(loop for elem in (rest exp)
+                                             collect (expand-generator elem)))))
+
+(defmethod expand-genex ((head (eql 'guard)) exp)
+  `(make-instance 'guard-generator
+                  :guard ,(second exp)
+                  :sub-generator ,(expand-generator (third exp))))
+
+(defmethod expand-genex ((head (eql 'struct)) exp)
+  (let* ((struct-type (second exp))
+         (slot-names (struct-type-slot-names struct-type)))
+    (loop for (keyword gen) on (cddr exp) by #'cddr
+       collect (list keyword gen) into keywords-and-gens
+       finally
+         (return
+           (let ((sorted-slots
+                  (sort keywords-and-gens #'<
+                        :key (lambda (keyword-and-gen)
+                               (position (first keyword-and-gen) slot-names
+                                         :test (lambda (key sym)
+                                                 (equal (symbol-name key)
+                                                        (symbol-name sym))))))))
+             `(make-instance
+               'struct-generator
+               :struct-type ',struct-type
+               :slot-names (list ,@(loop for slot-name in slot-names
+                                      collect `(quote ,slot-name)))
+               :slot-keywords (list ,@(mapcar #'first sorted-slots))
+               :slot-generators
+               (list ,@(loop for slot in sorted-slots
+                          collect (expand-generator (second slot))))))))))
+
+(defmethod expand-genex ((head (eql 'map)) exp)
+  (destructuring-bind (mapping &rest sub-generators) (rest exp)
+    `(make-instance 'mapped-generator
+                    :mapping ,mapping
+                    :sub-generators (list ,@(loop for elem in sub-generators
+                                               collect (expand-generator elem))))))
+
+(defmethod expand-genex ((head (eql 'chain)) exp)
+  (destructuring-bind (params &rest body) (rest exp)
+    (let ((binding-vars
+           (loop for param in params
+              collect (cond
+                        ((listp param) (first param))
+                        (t param))))
+          (binding-gens
+           (loop for param in params
+              collect (cond
+                        ((listp param) (expand-generator (second param)))
+                        (t param)))))
+      `(make-instance 'chained-generator
+                      :pre-generators (list ,@binding-gens)
+                      :generator-function (lambda ,binding-vars ,@body)))))
 
 (defmacro def-generator (name lambda-list &body body)
   "Define a new, possibly recursive, generator type."
@@ -661,3 +690,17 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
      (setf (get ',name 'genex-macro)
            (destructuring-lambda ,lambda-list
              ,@body))))
+
+(def-dynenv-macro genex-macrolet (definitions &body body)
+  (let ((new-genex-macros
+         (loop for (name lambda-list . macro-body) in definitions
+            collect (cons name `(destructuring-lambda ,lambda-list
+                                  ,@macro-body)))))
+    (ct-let ((**local-genex-macros**
+              (reduce (lambda (accum item)
+                        (destructuring-bind (symbol . data) item
+                          (update-alist symbol data accum)))
+                      new-genex-macros
+                      :initial-value **local-genex-macros**)))
+      `(progn
+         ,@body))))

@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :check-it
-  (:use :cl :alexandria :optima)
+  (:use :cl :alexandria :optima :macrodynamics)
   (:export #:shrink
            #:shrink-and-trap-errors
 
@@ -59,6 +59,8 @@
            #:check-it
            
            #:with-generators
+           #:let-map
+           #:let-map*
            #:check-that
 
            #:generator-reader))
