@@ -212,7 +212,7 @@
                            max-length) generator
     (let ((rand-length
            (+ min-length
-              (random (- (min (1+ max-length) *list-size*) min-length)))))
+              (random (- (1+ (min max-length *list-size*)) min-length)))))
       (setf sub-generators (loop repeat (max rand-length min-length)
                               collect (funcall generator-function)))
       (loop for sub-generator in sub-generators
