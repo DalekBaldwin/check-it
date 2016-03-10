@@ -43,8 +43,8 @@
     struct))
 
 (defmethod regenerate ((generator mapped-generator))
-  (with-obvious-accessors (sub-generators mapping) generator
-    (apply mapping (mapcar #'regenerate sub-generators))))
+  (with-obvious-accessors (sub-generators mapping-function) generator
+    (apply mapping-function (mapcar #'regenerate sub-generators))))
 
 (defmethod regenerate ((generator chained-generator))
   (regenerate (cached-generator generator)))

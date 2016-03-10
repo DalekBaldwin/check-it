@@ -261,7 +261,7 @@ that of the alternative that was originally tried."
       (setf cached-value result))))
 
 (defmethod shrink ((value mapped-generator) test)
-  (with-obvious-accessors (cached-value sub-generators mapping) value
+  (with-obvious-accessors (cached-value sub-generators mapping-function) value
     (loop
          for sub-generator in sub-generators
          for i from 0
@@ -273,8 +273,8 @@ that of the alternative that was originally tried."
                                    (let ((test-tuple
                                           (mapcar #'cached-value sub-generators)))
                                      (setf (nth i test-tuple) x)
-                                     (apply mapping test-tuple)))))))))
-    (apply mapping (mapcar #'cached-value sub-generators))))
+                                     (apply mapping-function test-tuple)))))))))
+    (apply mapping-function (mapcar #'cached-value sub-generators))))
 
 (defmethod shrink ((value chained-generator) test)
   (with-obvious-accessors (cached-value cached-generator) value

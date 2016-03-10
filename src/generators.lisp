@@ -169,9 +169,9 @@
   ((sub-generators
     :initarg :sub-generators
     :accessor sub-generators)
-   (mapping
-    :initarg :mapping
-    :accessor mapping)))
+   (mapping-function
+    :initarg :mapping-function
+    :accessor mapping-function)))
 
 (defclass chained-generator (generator)
   ((pre-generators
@@ -395,8 +395,8 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
     struct))
 
 (defmethod generate ((generator mapped-generator))
-  (with-obvious-accessors (sub-generators mapping) generator
-    (apply mapping (mapcar #'generate sub-generators))))
+  (with-obvious-accessors (sub-generators mapping-function) generator
+    (apply mapping-function (mapcar #'generate sub-generators))))
 
 (defmethod generate ((generator chained-generator))
   (with-obvious-accessors (pre-generators generator-function cached-generator) generator
@@ -633,9 +633,9 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
                           collect (expand-generator (second slot))))))))))
 
 (defmethod expand-genex ((head (eql 'map)) exp)
-  (destructuring-bind (mapping &rest sub-generators) (rest exp)
+  (destructuring-bind (mapping-function &rest sub-generators) (rest exp)
     `(make-instance 'mapped-generator
-                    :mapping ,mapping
+                    :mapping-function ,mapping-function
                     :sub-generators (list ,@(loop for elem in sub-generators
                                                collect (expand-generator elem))))))
 
