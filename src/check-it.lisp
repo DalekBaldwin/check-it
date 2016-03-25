@@ -67,16 +67,28 @@
         (funcall test arg)
       (error () nil))))
 
-(defun check-it% (test-form generator test
-                  &key
-                    examples
-                    (shrink-failures t)
-                    (random-state t)
-                    (regression-id nil regression-id-supplied)
-                    (regression-file (when regression-id-supplied
-                                       (gethash
-                                        (symbol-package regression-id)
-                                        *package-regression-files*))))
+(define-condition property-violation ()
+  ((id
+    :initarg :id
+    :accessor id)
+   (form
+    :initarg :form
+    :accessor form)
+   (critical
+    :initarg :critical
+    :accessor critical)))
+
+(defun check-it%
+    (test-form generator test
+     &key
+       examples
+       (shrink-failures t)
+       (random-state t)
+       (regression-id nil regression-id-supplied)
+       (regression-file (when regression-id-supplied
+                          (gethash
+                           (symbol-package regression-id)
+                           *package-regression-files*))))
   (let ((error-reporting-test
          (wrap-test-for-error-reporting test))
         (shrink-test
@@ -88,12 +100,14 @@
              ;; to-do: DRY this up
              (cond
                ((null result)
-                (format *check-it-output* "~&Test ~A failed on example arg ~A~%"
+                (format *check-it-output*
+                        "~&Test ~A failed on example arg ~A~%"
                         test-form
                         example)
                 (return-from trial-run nil))
                ((errored result)
-                (format *check-it-output* "~&Test ~A signaled error ~A on example arg ~A~%"
+                (format *check-it-output*
+                        "~&Test ~A signaled error ~A on example arg ~A~%"
                         test-form
                         (wrapped-error result)
                         example)
@@ -105,13 +119,15 @@
                     (result (funcall error-reporting-test datum)))
                (cond
                  ((null result)
-                  (format *check-it-output* "~&Test ~A failed regression ~A with arg ~A~%"
+                  (format *check-it-output*
+                          "~&Test ~A failed regression ~A with arg ~A~%"
                           test-form
                           regression-id
                           datum)
                   (return-from trial-run nil))
                  ((errored result)
-                  (format *check-it-output* "~&Test ~A signaled error ~A on regression ~A with arg ~A~%"
+                  (format *check-it-output*
+                          "~&Test ~A signaled error ~A on regression ~A with arg ~A~%"
                           test-form
                           (wrapped-error result)
                           regression-id
@@ -122,9 +138,12 @@
            do
              (progn
                (generate generator)
-               (let (;; produce readable representation before anybody mutates this value
-                     (stringified-value (format nil "~S" (cached-value generator)))
-                     (result (funcall error-reporting-test (cached-value generator))))
+               (let (;; produce readable representation before anybody mutates
+                     ;; this value
+                     (stringified-value
+                      (format nil "~S" (cached-value generator)))
+                     (result
+                      (funcall error-reporting-test (cached-value generator))))
                  (flet ((save-regression (string)
                           (when regression-file
                             (push string (get regression-id 'regression-cases))
@@ -136,7 +155,9 @@
                                       (write-regression-case regression-id string)))))
                         (do-shrink ()
                           (let ((shrunk (shrink generator shrink-test)))
-                            (format *check-it-output* "~&Shrunken failure case:~%~A~%" shrunk)
+                            (format *check-it-output*
+                                    "~&Shrunken failure case:~%~A~%"
+                                    shrunk)
                             shrunk)))
                    (cond
                      ((null result)
@@ -164,20 +185,89 @@
                       (return-from trial-run nil))))))))
       (return-from trial-run t))))
 
-(defmacro check-it (generator test
-                    &key
-                      examples
-                      (shrink-failures t)
-                      (random-state t random-state-supplied)
-                      (regression-id nil regression-id-supplied)
-                      (regression-file nil regression-file-supplied))
+(defmacro check-it
+    (generator test
+     &key
+       examples
+       (shrink-failures t)
+       (random-state t random-state-supplied)
+       (regression-id nil regression-id-supplied)
+       (regression-file nil regression-file-supplied))
   "Macro for performing a randomized test run."
   `(check-it% ',test ,generator ,test
               :examples ,examples
               :shrink-failures ,shrink-failures
-              ,@(when random-state-supplied `(:random-state ,random-state))
-              ,@(when regression-id-supplied `(:regression-id ',regression-id))
-              ,@(when regression-file-supplied `(:regression-file ,regression-file))))
+              ,@(when random-state-supplied
+                      `(:random-state ,random-state))
+              ,@(when regression-id-supplied
+                      `(:regression-id ',regression-id))
+              ,@(when regression-file-supplied
+                      `(:regression-file ,regression-file))))
+
+(defmacro do-trial (&body body)
+  (with-gensyms (failures abort-trial)
+    `(let ((,failures nil))
+       (catch ',abort-trial
+         (handler-case
+             (handler-bind
+                 ((property-violation
+                   (lambda (c)
+                     (with-slots (id form critical) c
+                       (push (id c) ,failures))
+                     (if (critical c)
+                         (throw ',abort-trial nil)
+                         (invoke-restart 'continue-trial)))))
+               ,@body)
+           (error (c)
+             (push
+              (make-instance 'reified-error :wrapped-error c) ,failures)
+             (throw ',abort-trial nil))))
+       (remove-duplicates (reverse ,failures)))))
+
+#+nil
+(let ((messages nil))
+  (catch 'abort-trial
+    (handler-case
+        (handler-bind
+            ((property-violation
+              (lambda (c)
+                (with-slots (id form critical) c
+                  (push (id c) messages))
+                (if (critical c)
+                    (throw 'abort-trial nil)
+                    (invoke-restart 'continue-trial)))))
+          (progn
+            (loop repeat 5
+               do
+                 (check-property nil :critical nil))
+            (error "barf")
+            (loop repeat 5
+               do
+                 (check-property nil))))
+      (error (c)
+        (push (type-of c) messages)
+        (throw 'abort-trial nil))))
+  (let ((failure-profile
+         (remove-duplicates
+          (reverse messages))))
+    failure-profile
+    #+nil
+    (cond
+      ((endp failure-profile)
+       t)
+      (t))))
+
+(defmacro check-property (form &key critical)
+  (with-gensyms (result id)
+    `(let ((,result ,form))
+       (when (not ,result)
+         (restart-case
+             (signal 'property-violation
+                     :id ',id
+                     :form ',form
+                     :critical ,critical)
+           (continue-trial ())))
+       ,result)))
 
 (def-dynenv-macro check-that
     (expr
@@ -205,6 +295,15 @@
             (declare (ignorable ,@(mapcar #'first **mappings**)))
             ,expr)))
       ,@keys)))
+
+(defmacro generating (bindings &body body)
+  (declare (ignorable bindings body)))
+(defmacro mapping (bindings &body body)
+  (declare (ignorable bindings body)))
+(defmacro chaining (bindings &body body)
+  (declare (ignorable bindings body)))
+(defmacro checking (&body body)
+  (declare (ignorable body)))
 
 ;; todo: handle shadowing of earlier variable names
 (def-dynenv-macro let-map (bindings &body body)
@@ -244,13 +343,6 @@
         (let-map* (,@(rest bindings))
            ,@body)))))
 
-#+nil
-(with-generators ((x (generator (integer)))
-                    (y (generator (integer))))
-    (let-map* ((a (+ x y))
-               (b (+ a a)))
-      (check-that (= b (* 2 a)))))
-
 (def-dynenv-macro with-generators (bindings &body body)
   (let ((symbols
          (loop for binding in bindings
@@ -266,3 +358,13 @@
        ,(ct-let ((**generator-symbols**
                   (union symbols **generator-symbols**)))
                 `(progn ,@body)))))
+
+(def-dynenv-macro with-generators* (bindings &body body)
+  (cond
+    ((endp bindings)
+     `(progn ,@body))
+    (t
+     (destructuring-bind (binding . rest-bindings) bindings
+       `(with-generators (,binding)
+          (with-generators* ,rest-bindings
+            ,@body))))))

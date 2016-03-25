@@ -59,6 +59,7 @@
            #:check-it
            
            #:with-generators
+           #:with-generators*
            #:let-map
            #:let-map*
            #:check-that

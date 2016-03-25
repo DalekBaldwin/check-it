@@ -481,8 +481,8 @@
          (is (equalp (generate g) (regenerate g))))))
 
 (deftest test-with-generators ()
-  (with-generators ((x (generator (integer)))
-                    (y (generator (integer))))
+  (with-generators ((x #g(integer))
+                    (y #g(integer)))
     (let-map* ((a (+ x y))
                (b (+ a a)))
       (is (check-that (= (+ x y) (+ x y))))
