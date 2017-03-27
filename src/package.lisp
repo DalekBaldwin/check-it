@@ -14,7 +14,7 @@
 
            #:generator
            #:generate
-           
+
            #:regenerate
 
            #:int-generator
@@ -49,7 +49,7 @@
 
            #:def-generator
            #:def-genex-macro
-           
+
            #:wrap-test-for-error-reporting
            #:wrap-test-for-shrinking
 
@@ -61,7 +61,4 @@
 (in-package :check-it)
 
 (defparameter *system-directory*
-  (make-pathname
-   :directory
-   (pathname-directory
-    (asdf:system-definition-pathname "check-it"))))
+  (asdf:system-source-directory "check-it"))
