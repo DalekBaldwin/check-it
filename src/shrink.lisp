@@ -116,7 +116,9 @@
 ;;;; Generator shrinkers
 
 (defmethod shrink ((value string-generator) test)
-  (let ((shrunken (shrink-list (cached-str-list value) test)))
+  (let ((shrunken (shrink-list (cached-str-list value)
+                               (lambda (arg)
+                                 (funcall test (join-list arg))))))
     (setf (cached-value value) (join-list shrunken))))
 
 (defmethod shrink ((value int-generator) test)

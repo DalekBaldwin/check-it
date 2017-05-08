@@ -15,6 +15,16 @@
        (is (equal (shrink (make-list size :initial-element nil) #'list-tester)
                   '(nil nil nil nil nil)))))
 
+(deftest test-string-generator-shrink-type ()
+  (let ((g (generator (string :min-length 1)))
+        (stringp-arg))
+    (generate g)
+    (let ((shrunken (shrink g (lambda (arg)
+                                (pushnew (stringp arg) stringp-arg)
+                                nil))))
+      (is (stringp shrunken))
+      (is (equal '(t) stringp-arg)))))
+
 (deftest test-struct-slot-names ()
   (let ((test-struct (make-a-struct :a-slot 5 :another-slot 5)))
     (is (equalp (check-it::struct-slot-names test-struct)
