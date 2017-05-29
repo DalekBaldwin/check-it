@@ -1,7 +1,11 @@
 (in-package :cl-user)
 
-(defpackage :check-it-test
-  (:use :cl :check-it :stefil :alexandria)
+(fiasco:define-test-package :check-it-test
+  (:use :cl
+        :check-it
+        :fiasco
+        :alexandria)
+  #+nil
   (:export
    #:run-all-tests
    #:deterministic-tests

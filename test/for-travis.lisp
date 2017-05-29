@@ -8,6 +8,8 @@
            (force-output t)
            (sleep 1)
            (uiop:quit -1))))
+    (fiasco:run-package-tests)
+    #+nil
     (handler-case
         (run-all-tests)
       ;; some Lisps appear not to use the condition's :report value,

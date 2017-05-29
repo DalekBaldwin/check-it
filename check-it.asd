@@ -20,7 +20,9 @@
                          (:file "shrink")
                          (:file "check-it"))
             :serial t))
-  :depends-on ("alexandria" "closer-mop" "optima")
+  :depends-on ("alexandria"
+               "closer-mop"
+               "optima")
   :in-order-to ((test-op (test-op "check-it/test"))))
 
 (defsystem "check-it/test"
@@ -36,5 +38,6 @@
                          (:file "randomized-tests")
                          (:file "destructive-tests")
                          (:file "for-travis"))))
-  :depends-on ("check-it" "stefil")
+  :depends-on ("check-it"
+               "fiasco")
   :perform (test-op (op c) (symbol-call :check-it-test '#:run-all-tests)))
