@@ -8,7 +8,7 @@
            (force-output t)
            (sleep 1)
            (uiop:quit -1))))
-    (fiasco:run-package-tests)
+    (fiasco:run-package-tests :package :check-it-test)
     #+nil
     (handler-case
         (run-all-tests)
