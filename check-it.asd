@@ -7,7 +7,7 @@
   :license "LLGPL"
   :description "A randomized property-based testing tool for Common Lisp."
   :homepage "https://github.com/DalekBaldwin/check-it"
-  :version "0.1.0"
+  :version "0.1.1"
   :components
   ((:static-file "check-it.asd")
    (:module "src"
@@ -27,7 +27,7 @@
   :serial t
   :author "Kyle Littler"
   :license "LLGPL"
-  :version "0.1.0"
+  :version "0.1.1"
   :description "Tests for check-it."
   :components
   ((:module "test"
