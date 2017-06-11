@@ -50,6 +50,10 @@
            (loop repeat 100
               do
                 (is (<= -2 (generate g) 2))))
+         (let ((g (generator (real -2 5))))
+           (loop repeat 100
+              do
+                (is (<= -2 (generate g) 5))))
          (let ((g (generator (real))))
            (loop repeat 100
               do
