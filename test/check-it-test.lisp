@@ -1,8 +1,5 @@
 (in-package :check-it/test)
 
-#+nil
-(in-root-suite)
-
 (defun run-all-tests ()
   (format t "~&Running deterministic tests:~%")
   (deterministic-tests)

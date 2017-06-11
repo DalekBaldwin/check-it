@@ -27,6 +27,7 @@
   :serial t
   :author "Kyle Littler"
   :license "LLGPL"
+  :version "0.1.0"
   :description "Tests for check-it."
   :components
   ((:module "test"
