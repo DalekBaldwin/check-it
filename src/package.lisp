@@ -1,7 +1,9 @@
 (in-package :cl-user)
 
 (defpackage :check-it
-  (:use :cl :alexandria :optima)
+  (:use :cl
+        :alexandria
+        :optima)
   (:export #:shrink
            #:shrink-and-trap-errors
 

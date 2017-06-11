@@ -4,9 +4,4 @@
   (:use :cl
         :check-it
         :fiasco
-        :alexandria)
-  #+nil
-  (:export
-   #:run-all-tests
-   #:deterministic-tests
-   #:randomized-tests))
+        :alexandria))
