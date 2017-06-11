@@ -4,12 +4,6 @@
  :check-it/test
  (merge-pathnames "test/regression-cases.lisp" *system-directory*))
 
-#+nil
-(in-root-suite)
-
-#+nil
-(defsuite* randomized-tests)
-
 (deftest test-generator ()
   (is (every #'identity
              (mapcar (lambda (x y) (subtypep (type-of x) y))
@@ -56,6 +50,10 @@
            (loop repeat 100
               do
                 (is (<= -2 (generate g) 2))))
+         (let ((g (generator (real -2 5))))
+           (loop repeat 100
+              do
+                (is (<= -2 (generate g) 5))))
          (let ((g (generator (real))))
            (loop repeat 100
               do

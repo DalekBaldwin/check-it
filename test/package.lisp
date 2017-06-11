@@ -1,16 +1,15 @@
 (in-package :cl-user)
 
-(fiasco:define-test-package :check-it/test
+(defpackage :check-it/test
   (:use :cl
         :check-it
         :fiasco
-        :alexandria)
-  #+nil
-  (:export
-   #:run-all-tests
-   #:deterministic-tests
-   #:randomized-tests))
+        :alexandria))
+
+(fiasco:defsuite
+    (fiasco-suites::check-it/test :bind-to-package :check-it/test
+                                  :in fiasco-suites::all-tests))
 
 (in-package :check-it/test)
 
-(defparameter *system-directory* check-it::*system-directory*)
+(defparameter *system-directory* (asdf:system-source-directory "check-it/test"))

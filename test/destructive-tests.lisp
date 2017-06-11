@@ -1,11 +1,5 @@
 (in-package :check-it/test)
 
-#+nil
-(in-root-suite)
-
-#+nil
-(in-suite randomized-tests)
-
 ;;;; Test pattern: copy generated value, mutate value in cache, regenerate, and compare
 
 (deftest test-list-generator-mutation ()

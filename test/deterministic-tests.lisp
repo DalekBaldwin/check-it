@@ -1,11 +1,5 @@
 (in-package :check-it/test)
 
-#+nil
-(in-root-suite)
-
-#+nil
-(defsuite* deterministic-tests)
-
 (deftest test-int-shrink ()
   (loop for int in (list 5 20 100 300)
      do

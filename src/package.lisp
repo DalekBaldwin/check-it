@@ -1,7 +1,9 @@
 (in-package :cl-user)
 
 (defpackage :check-it
-  (:use :cl :alexandria :optima)
+  (:use :cl
+        :alexandria
+        :optima)
   (:export #:shrink
            #:shrink-and-trap-errors
 
@@ -60,5 +62,4 @@
 
 (in-package :check-it)
 
-(defparameter *system-directory*
-  (asdf:system-source-directory "check-it"))
+(defparameter *system-directory* (asdf:system-source-directory "check-it"))
