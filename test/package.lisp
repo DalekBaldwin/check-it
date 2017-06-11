@@ -1,7 +1,5 @@
 (in-package :cl-user)
 
-(fiasco:define-test-package)
-
 (defpackage :check-it/test
   (:use :cl
         :check-it
