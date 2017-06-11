@@ -1,8 +1,6 @@
 (in-package :cl-user)
 
 (defpackage :check-it/test
-  (:use :fiasco
-        :cl)
   (:use :cl
         :check-it
         :fiasco

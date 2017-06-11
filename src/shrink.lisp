@@ -273,7 +273,8 @@ that of the alternative that was originally tried."
                                    (let ((test-tuple
                                           (mapcar #'cached-value sub-generators)))
                                      (setf (nth i test-tuple) x)
-                                     (apply mapping test-tuple)))))))))
+                                     (apply mapping test-tuple)))))))
+           (declare (ignorable shrunk-elem))))
     (apply mapping (mapcar #'cached-value sub-generators))))
 
 (defmethod shrink ((value chained-generator) test)
