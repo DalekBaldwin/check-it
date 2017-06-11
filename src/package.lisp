@@ -60,5 +60,4 @@
 
 (in-package :check-it)
 
-(defparameter *system-directory*
-  (asdf:system-source-directory "check-it"))
+(defparameter *system-directory* (asdf:system-source-directory "check-it"))
