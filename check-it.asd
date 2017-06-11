@@ -32,7 +32,6 @@
   :components
   ((:module "test"
             :components ((:file "package")
-                         (:file "system")
                          (:file "check-it-test")
                          (:file "deterministic-tests")
                          (:file "randomized-tests")
