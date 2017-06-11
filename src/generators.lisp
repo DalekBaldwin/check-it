@@ -315,7 +315,7 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
     (_
      (lambda ()
        (let ((new-high (* (min (abs high) *size*) (signum high)))
-             (new-low (* (min (abs high) *size*) (signum low))))
+             (new-low (* (min (abs low) *size*) (signum low))))
          (+ (random (float (- new-high new-low))) new-low))))))
 
 (let ((top-char 127))
