@@ -26,4 +26,9 @@ script:
   - cl -e '(in-package :cl-user)'
        -e '(ql:quickload :check-it)'
        -e '(ql:quickload :check-it/test)'
-       -e '(check-it/test::run-tests-for-travis)'
+       -e '(let ((*debugger-hook*
+                  (lambda (c h)
+                    (declare (ignore h))
+                    (print c t)
+                    (uiop:quit -1))))
+             (check-it/test::run-tests-for-travis))'
