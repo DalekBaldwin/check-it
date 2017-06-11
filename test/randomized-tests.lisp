@@ -1,11 +1,13 @@
-(in-package :check-it-test)
+(in-package :check-it/test)
 
 (register-package-regression-file
- :check-it-test
+ :check-it/test
  (merge-pathnames "test/regression-cases.lisp" *system-directory*))
 
+#+nil
 (in-root-suite)
 
+#+nil
 (defsuite* randomized-tests)
 
 (deftest test-generator ()

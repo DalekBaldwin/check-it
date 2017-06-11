@@ -25,5 +25,5 @@ install:
 script:
   - cl -e '(in-package :cl-user)'
        -e '(ql:quickload :check-it)'
-       -e '(ql:quickload :check-it-test)'
-       -e '(check-it-test::run-tests-for-travis)'
+       -e '(ql:quickload :check-it/test)'
+       -e '(check-it/test::run-tests-for-travis)'

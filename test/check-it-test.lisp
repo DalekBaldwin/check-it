@@ -1,5 +1,6 @@
-(in-package :check-it-test)
+(in-package :check-it/test)
 
+#+nil
 (in-root-suite)
 
 (defun run-all-tests ()
