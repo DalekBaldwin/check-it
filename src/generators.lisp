@@ -334,8 +334,8 @@ generalizes a sigmoidal probabilistic activation function from 2 to N possible o
              (new-low (* (min abs-low *size*) signum-low)))
          (+ (random (float (- new-high new-low))) new-low))))))
 
-(let ((top-char 127)
-      (1+top-char (1+ top-char)))
+(let* ((top-char 127)
+       (1+top-char (1+ top-char)))
   (defun char-generator-function (low high)
     "Return a function for producing random chars uniformly with appropriate bounds."
     (match (cons low high)
