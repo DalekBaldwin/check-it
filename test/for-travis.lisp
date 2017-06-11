@@ -8,7 +8,10 @@
            (force-output t)
            (sleep 1)
            (uiop:quit -1))))
-    (fiasco:run-package-tests :package :check-it/test)
+    (or
+     (fiasco:run-package-tests :package :check-it/test)
+     (sleep 1)
+     (uiop:quit -1))
     #+nil
     (handler-case
         (run-all-tests)
