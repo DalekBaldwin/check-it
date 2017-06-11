@@ -6,8 +6,6 @@
   :author "Kyle Littler"
   :license "LLGPL"
   :description "A randomized property-based testing tool for Common Lisp."
-  :long-description
-  #.(read-file-string (subpathname *load-pathname* "README.md"))
   :homepage "https://github.com/DalekBaldwin/check-it"
   :version "0.1.0"
   :components
@@ -40,4 +38,4 @@
                          (:file "for-travis"))))
   :depends-on ("check-it"
                "fiasco")
-  :perform (test-op (op c) (symbol-call :check-it-test '#:run-all-tests)))
+  :perform (test-op (op c) (symbol-call :check-it/test '#:run-all-tests)))
